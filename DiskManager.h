@@ -17,8 +17,6 @@ class DiskManager
 {
 
 public:
-
-
     DiskBlock MyDisk[1024];                  // 磁盘，有1024个块
     std::vector<short> fatList;                      // 文件分配表，默认为-2：空闲
     std::map<std::string, int> fileNameToNumOfBlock; // 文件名与FAT表的映射
@@ -38,10 +36,9 @@ public:
     void freeBlock(int num_block);
 
     int AllocateBlocks(std::string fileName, int num_blocks, std::string data);
-    int SaveMmToSwap(std::string data);
     void DeallocateBlocks(std::string fileName);
+    int SaveMmToSwap(std::string data);
     std::string ReadFileDataFromDisk(std::string fileName, int size);
 
     void PrintMyDisk();
-    void PrintBitMap();
 };

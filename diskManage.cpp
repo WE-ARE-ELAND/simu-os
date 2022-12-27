@@ -108,7 +108,9 @@ void DiskManager::freeBlock(int num_block)
 
 /**
  * 存储文件，为文件分配磁盘块
- * @param num_blocks 所需的磁盘块数量
+ * @param fileName 文件名
+ * @param size 所需的磁盘块数量
+ * @param data 写入的数据
  * @return 空间是否充足
  */
 int DiskManager::AllocateBlocks(string fileName, int size, string data)
@@ -168,12 +170,14 @@ void DiskManager::DeallocateBlocks(string fileName)
 }
 
 /*----------保存内存数据到交换区，返回块号-------------*/
-int DiskManager::SaveMmToSwap(string data) {
+int DiskManager::SaveMmToSwap(string data)
+{
     // filter
     int i = 900;
     for (; i < 1024; ++i)
     {
-        if (fatList[i] == -2) {
+        if (fatList[i] == -2)
+        {
             writeBlock(i, data[i]);
             break;
         }
@@ -183,8 +187,9 @@ int DiskManager::SaveMmToSwap(string data) {
 
 /**
  * 读取文件数据
-*/
-string DiskManager::ReadFileDataFromDisk(string fileName, int size) {
+ */
+string DiskManager::ReadFileDataFromDisk(string fileName, int size)
+{
     int start_num_block = fileNameToNumOfBlock[fileName];
     string data = "";
     int num_block = start_num_block;
@@ -199,7 +204,7 @@ string DiskManager::ReadFileDataFromDisk(string fileName, int size) {
 
 /**
  * 打印磁盘数据
-*/
+ */
 void DiskManager::PrintMyDisk()
 {
 
@@ -211,14 +216,14 @@ void DiskManager::PrintMyDisk()
     }
 };
 
-
 /**
  * 测试代码
-*/
-int main() {
+ */
+int main()
+{
     DiskManager::getInstance()->PrintMyDisk();
     string data = "1234xxzz5678ccvv9999oooo0x0xcccc1234xxzz5678ccvv9999oooo0x0xcccc";
-    DiskManager::getInstance()->AllocateBlocks("hello", 16, data);
+    DiskManager::getInstance()->AllocateBlocks("hello.md", 16, data);
     DiskManager::getInstance()->PrintMyDisk();
     return 0;
 }
