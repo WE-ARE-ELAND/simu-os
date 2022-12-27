@@ -4,7 +4,9 @@
 
 以文件名为参数，在FAT表中查找文件开始磁盘块号和其余盘块号，在磁盘中逐步删除整个文件。同时更新FAT表和空闲盘块。
 
+```
 void DeallocateBlocks(string fileName);
+```
 
 ### 线程管理：数据生成线程
 
