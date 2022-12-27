@@ -34,7 +34,7 @@ int DiskManager::AllocateBlocks(int size, string data, string fileName);
 
 ```
      // 读取兑换区块
-    char readSwapBlock(int blockNum);
+    void readSwapBlock(int blockNum, char *buffer);
     // 写入兑换区块
     void writeSwapBlock(int blockNum, char *buffer);
 ```
