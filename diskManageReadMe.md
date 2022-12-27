@@ -10,10 +10,12 @@ void DeallocateBlocks(string fileName);
 
 该线程负责生成外存数据，给定数据大小（按字节计算）、数据信息（英文字母）、存储目录、文件名后，该线程调用磁盘管理中空闲磁盘管理功能，申请所需大小的外存块，如果盘块不够给出提示。按照要求的数据组织方式，将数据存入磁盘块（按块分配磁盘），并调用目录管理功能为其在目录中建立目录项，更改空闲盘块信息。注意，目录本身不需要分配盘块。
 
-/ ** 
-* @param size 数据大小（按字节计算）
-* @param data 数据信息（英文字母）
-* @param filename 文件名
-* @return 磁盘块是否充足， 或分配的首个磁盘块
-* /
+/```
+/** 
+*@param size 数据大小（按字节计算）
+*@param data 数据信息（英文字母）
+*@param filename 文件名
+*@return 磁盘块是否充足， 或分配的首个磁盘块
+*/
 int DiskManager::AllocateBlocks(int size, string data, string fileName);
+```/
