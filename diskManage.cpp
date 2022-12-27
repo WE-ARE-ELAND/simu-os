@@ -12,10 +12,20 @@ DiskManager::DiskManager()
     for (int i = 0; i < NUM_BLOCKS; i++)
     {
         MyDisk[i].BlockNum = i;
-        MyDisk[i].data = "####";
+        MyDisk[i].data = "########################################"; // 四十个字符，正好40字节
     }
-    fatList.assign(1024, -2);
-    FreeDataBlockNum = 900;
+    fatList.assign(900, -2); // 需要1800个字节，45个磁盘块
+    // 前45个磁盘块用于存储FAT表
+    for (int i = 0; i < 45; ++i)
+    {
+        MyDisk[i].data = "-2-2-2-2-2-2-2-2-2-2";
+    }
+    // 初始化空闲盘块
+    // for (int i = 45; i < 900; ++i)
+    // {
+    //     freeBlocks.push_back(i);
+    // }
+    FreeDataBlockNum = 900 - 45;
     FreeSwapBlockNum = 124;
 }
 
@@ -45,11 +55,39 @@ DiskManager *DiskManager::getInstance()
  */
 int DiskManager::allocateBlock()
 {
-    // todo 1. 利用成组连接法分配空闲块
-    int num_block;
-    if (true)
+    int freeNum, num_block; // 空闲块数目, 分配的盘块号
+    // 1. 当前组的盘块大于1块，从组尾开始分配
+    if (freeBlocks[0].size() > 1)
     {
-        num_block = freeBlocks.top();
+        freeNum = freeBlocks[0].size();
+        num_block = freeBlocks[0].back();
+        freeBlocks[0].pop_back();
+        FreeDataBlockNum--;
+    }
+    // 2. 当前组只剩一个空闲块，分配后将第二组的空闲块拷贝到第一组
+    else if (freeBlocks[0].size() == 1)
+    {
+        // 2.1 不是链尾，还有其它空闲块组
+        if (freeBlocks.size() > 1)
+        {
+            num_block = freeBlocks[0].back();
+            FreeDataBlockNum--;
+            for (int j = freeBlocks[1].size(); j >= 1; j--) {
+                // 当前组已经分配完，将下一组拷贝到当前组
+                freeBlocks[0].push_back(freeBlocks[1][j]);
+                freeBlocks[1].pop_back();
+            }
+        }
+        // 2.2 到达链尾，没有空闲块可分配
+        else
+        {
+            return -1;
+        }
+    }
+    // 3. 当前组已经分配完
+    else
+    {
+        return -1;
     }
     return num_block;
 }
@@ -75,7 +113,7 @@ void DiskManager::writeBlock(int num_block, char data)
 /**
  * 读取指定磁盘块的信息
  * @param num_block 磁盘块块号
- * @param data 读取的数据
+ * @return data 读取的数据
  */
 string DiskManager::read_disk_block(int block_num)
 {
@@ -147,7 +185,8 @@ int DiskManager::AllocateBlocks(string fileName, int size, string data)
 }
 
 /**
- * 删除文件，回收空闲区
+ * 删除文件，回收空闲块
+ * @param fileName 文件名
  */
 void DiskManager::DeallocateBlocks(string fileName)
 {
@@ -159,7 +198,7 @@ void DiskManager::DeallocateBlocks(string fileName)
         int next_num_block = fatList[num_block];
         fatList[num_block] = -2;
         {
-            // 2. 更新成组连接的数据结构
+            // 2. 更新空闲盘块
             freeBlock(num_block);
         }
         num_block = next_num_block;
@@ -169,8 +208,11 @@ void DiskManager::DeallocateBlocks(string fileName)
     fileNameToNumOfBlock.erase(fileName);
 }
 
-/*----------保存内存数据到交换区，返回块号-------------*/
-int DiskManager::SaveMmToSwap(string data)
+/**
+ * todo 保存数据到交换区
+ * @param data 内存中的数据
+ */
+void DiskManager::writeSwapBlock(int blockNum, char buffer)
 {
     // filter
     int i = 900;
@@ -178,15 +220,21 @@ int DiskManager::SaveMmToSwap(string data)
     {
         if (fatList[i] == -2)
         {
-            writeBlock(i, data[i]);
+            writeBlock(i, buffer);
             break;
         }
     }
-    return i;
+}
+
+void writeSwapBlock(int blockNum, char *buffer)
+{
 }
 
 /**
  * 读取文件数据
+ * @param fileName 文件名
+ * @param size 文件所占的磁盘块数量
+ * @return 文件数据
  */
 string DiskManager::ReadFileDataFromDisk(string fileName, int size)
 {
@@ -215,6 +263,29 @@ void DiskManager::PrintMyDisk()
             cout << endl;
     }
 };
+
+/**
+ * 将磁盘数据写入物理文件
+ */
+void DiskManager::dumpFile()
+{
+    string filename("disk.txt");
+    fstream output_fstream;
+
+    output_fstream.open(filename, std::ios_base::out);
+    if (!output_fstream.is_open())
+    {
+        cerr << "Failed to open " << filename << '\n';
+    }
+    else
+    {
+        for (int i = 0; i < 1024; ++i)
+        {
+            output_fstream << MyDisk[i].data;
+        }
+        cerr << "Done Writing!" << endl;
+    }
+}
 
 /**
  * 测试代码

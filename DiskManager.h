@@ -7,12 +7,18 @@ const int NUM_BLOCKS = 1024;     // 磁盘块总数为 1024 个，块间寻址�
 const int NUM_SWAP_BLOCKS = 124; // 用于存储兑换区的磁盘块数为 124 个
 const int NUM_FILE_BLOCKS = 900; // 用于存储文件的磁盘块数为 900 个
 
+/*
+ * 磁盘块
+ */
 struct DiskBlock
 {
     int BlockNum; // 块号
     std::string data;  // 数据
 };
-/*----------磁盘管理类-------------*/
+
+/*
+* 磁盘管理类
+*/
 class DiskManager
 {
 
@@ -20,8 +26,7 @@ public:
     DiskBlock MyDisk[1024];                  // 磁盘，有1024个块
     std::vector<short> fatList;                      // 文件分配表，默认为-2：空闲
     std::map<std::string, int> fileNameToNumOfBlock; // 文件名与FAT表的映射
-    // TODO 成组连接法的数据结构
-    std::stack<int> freeBlocks;
+    std::vector<std::vector<int>> freeBlocks;
     int FreeDataBlockNum;                         // 空闲数据区的块数
     int FreeSwapBlockNum;                         // 空闲交换区的块数
 
@@ -39,6 +44,11 @@ public:
     void DeallocateBlocks(std::string fileName);
     int SaveMmToSwap(std::string data);
     std::string ReadFileDataFromDisk(std::string fileName, int size);
+     // 读取兑换区块
+    void readSwapBlock(int blockNum, char buffer);
+    // 写入兑换区块
+    void writeSwapBlock(int blockNum, char buffer);
 
     void PrintMyDisk();
+    void dumpFile();
 };
