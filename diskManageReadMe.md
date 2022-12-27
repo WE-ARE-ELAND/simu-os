@@ -33,7 +33,10 @@ int DiskManager::AllocateBlocks(int size, string data, string fileName);
 根据目录中文件存储信息将文件数据从外存读入内存，此间如果8块内存不够存放文件信息，需要进行换页（选择的换页策略见分组要求），换出的页面存放到磁盘兑换区。
 
 ```
-int SaveMmToSwap(std::string data);
+     // 读取兑换区块
+    void readSwapBlock(int blockNum, char *buffer);
+    // 写入兑换区块
+    void writeSwapBlock(int blockNum, char *buffer);
 ```
 
 ## 内部函数
