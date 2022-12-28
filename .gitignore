@@ -1,2 +1,5 @@
 .vscode
 *.exe
+DiskManager1.cpp
+DiskManager2.cpp
+test.cpp

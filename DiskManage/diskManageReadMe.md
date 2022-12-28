@@ -46,6 +46,7 @@ int DiskManager::AllocateBlocks(int size, string data, string fileName);
 ## 用户接口
 
 可以动态查看外存信息
-
+touch 创建文件
+rm 删除文件
 
 
