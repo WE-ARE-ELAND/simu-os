@@ -6,7 +6,8 @@ void data_generation_thread(File &newFile)
     if (status == 1)
     {
         // 成功分配内存块
-        }
+        int first_block = diskManager.fileNameToNumOfBlock[newFile->name]; // 获取文件名对应的第一个盘块号
+    }
     else
     {
     }
