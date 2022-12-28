@@ -1,4 +1,51 @@
 #include "DirectoryManage.h"
+
+
+void DirectoryManage::login()
+{
+	string account;
+	string password;
+	cout << "---------登录目录管理系统---------\n";
+	cout << "账号：";
+	cin >> account;
+	cout << "密码：";
+	cin >> password;
+	user = QueryUser(account, password);
+	if (user.state == 0) {
+		cout << "登陆失败！请重新登录！\n";
+		system("pause");
+		system("cls");
+		login();
+	}
+}
+
+DirectoryManage::User DirectoryManage::QueryUser(string account, string password)
+{
+	User userList[] = {
+		{"admin",1,"admin","admin",0},
+		{"user1",2,"user1","123456",0},
+		{"user2",3,"user1","123456",0},
+		{"user3",4,"user1","123456",0},
+		{"user4",5,"user1","123456",0}
+	};
+	User FailUser = { "登陆失败",0,"登陆失败", "登陆失败", 0 };
+	for (int i = 0; i < sizeof(userList)/sizeof(User); i++) {
+		if (account == userList[i].account) {
+			if (password == userList[i].password) {
+				userList[i].state = 1;
+				cout << "登陆成功！欢迎" << userList[i].name << "\n";
+				return userList[i];
+			}
+			else {
+				cout << "密码错误！\n";
+				return FailUser;
+			}
+		}
+	}
+	cout << "账号不存在！\n";
+	return FailUser;
+}
+
 //创建根目录
 void DirectoryManage::CreateRootDirectory() {
 	rootDir->name = "root";
