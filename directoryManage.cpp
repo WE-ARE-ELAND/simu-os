@@ -190,8 +190,8 @@ void DirectoryManage::CreateFile(string name)
     newFile->canRead = user.userRight;
     newFile->canWrite = user.userRight;
     // 执行数据生成线程
-    // 线程：调用磁盘分配的函数、调用文件目录项函数
-    thread t(data_generation_thread); // 运行到这边就开一个新的线程执行data_generation_thread函数
+    // 线程：调用磁盘分配的函数，调用新建文件目录项的函数
+    thread t(data_generation_thread, std::ref(newFile)); // 运行到这边就开一个新的线程执行data_generation_thread函数
     t.join();
 }
 // 为文件建立目录项
@@ -199,7 +199,7 @@ void DirectoryManage::CreateDirEntry(File file, string owner, time_t create_time
 {
     DirectoryEntry *newDirEntry = new DirectoryEntry();
     newDirEntry->file = file;
-    newDirEntry->owner = owner;
+    newDirEntry->owner = owner; // 改成 newDirEntry->owner = user.name
     newDirEntry->create_time = create_time;
     newDirEntry->first_block = first_block;
     newDirEntry->frontFile = workDir->lastChildFile;
