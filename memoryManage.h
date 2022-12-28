@@ -3,127 +3,198 @@
 #include <unordered_map>
 #include <algorithm>
 #include <string>
-
-/**申请一块2560B的内存空间模拟内存，按逻辑划分为64块，每块40B。
+#include <time.h>
+#include <queue>
+using namespace std;
+/**申请一块2560 B的内存空间模拟内存，按逻辑划分为64块，每块40B。
  * 将目录中选中的文件读入内存，并显示文件中信息（字符）。
  * 内存可以同时存放多个文件信息，每个文件固定分配8个内存块*/
-
 const int MEMORY_SIZE = 2560;     // Total size of the memory in bytes
 const int MEMORY_BLOCK_SIZE = 40; // Size of each memory block in bytes
 const int NUM_MEMORY_BLOCKS = 64; // Number of memory blocks
 const int DEFAULT_NUM_BLOCKS = 8; // Number of blocks assigned to each thread by default
-
-// Data structure to represent a memory block
+const int INF = 1e9 + 100;
+const int diskStart = 900;
+const int diskEnd = 1023;
+// 内存块
 struct MemoryBlock
 {
-    int id;            // Unique identifier for the block
-    int size;          // Size of the block in bytes
-    bool is_free;      // Flag to indicate if the block is free or in use
-    vector<char> data; // Data in the block
+    int id;            // 内存块的id 独一无二
+    bool is_free;      // 是否被使用
+    string data;       // 内存块的数据
 };
 
-// Data structure to represent a page table entry 页表项
+// 页表项
 struct PageTableEntry
 {
-    int memory_block_id;  // ID of the memory block
-    int block_id;         // 磁盘块id
-    int thread_id;        // ID of the thread using the block
-    int access_count;     // Number of times the block has been accessed
-    bool is_valid;        // Flag to indicate if the entry is valid or not
+    int memory_block_id;  // 放在哪个内存块
+    int disk_id;          // 调出时候的磁盘号 默认为0     可提供900-1023
+    int thread_id;        // 属于哪个进程
     bool in_memory;       // 表示页面是否在内存中（如果不在内存中，需要先调入内存）
-    bool modify_bit;      // 修改位（Modify Bit）：表示该页是否被修改过。
     int last_access_time; // 最后一次被访问的时间（用于实现LRU算法）
 };
 
 // Data structure to represent a thread （PCB）
 struct Thread
 {
-    int id;                                             // Unique identifier for the thread
-    std::string name;                                   // Name of the thread
-    std::vector<int> blocks;                            // List of memory blocks assigned to the thread
-    std::unordered_map<int, PageTableEntry> page_table; // Page table for the thread 页表： 页号->页表项
+    int id;                                             // 进程id
+    std::string name;                                   // 进程名字
+    std::vector<MemoryBlock> blocks;                            // 进程包含的blocks
+    std::unordered_map<int, PageTableEntry> page_table; // 页表： 页号->页表项
+};
+int MemoryManager::threadsID = 1;
+struct LruBlock
+{
+    int in_memory, tim, thread_id, page_id;
 };
 
-// Memory management class
 class MemoryManager
 {
-private:
-    std::vector<MemoryBlock> blocks;         // List of memory blocks
-    std::unordered_map<int, Thread> threads; // Map of threads indexed by their IDs
-    int num_free_blocks;                     // Number of free blocks in the memory
-
-    // Private helper function to find a free block of a given size
-    int findFreeBlock(int size)
+public:
+    static int threadsID;
+    std::vector<int> blocks;         // 空闲的块
+    LruBlock LRUblocks[NUM_MEMORY_BLOCKS+5];      //用来记录最后出现的时间和是否空闲
+    std::unordered_map<int, Thread> threads; // 每个进程编号对应的进程
+    pair<int,int> disks[200];                   //记录磁盘的空闲状态 first是否空闲 0 是空闲
+public:
+    MemoryManager()
     {
-        // Iterate through the list of blocks
-        for (int i = 0; i < NUM_MEMORY_BLOCKS; i++)
+        for(int i=0;i<NUM_MEMORY_BLOCKS;i++)  //初始化空的容器
         {
-            // Check if the current block is free and has enough size
-            if (blocks[i].is_free && blocks[i].size >= size)
+            LRUblocks[i]={0, 0, -1, -1};
+            blocks.push_back(i);
+        }
+        for(int i=0;i<200;i++)
+            disks[i]={0,0};
+    }
+    void allocateThreads(string threadName, string content)  // size代表进程的大小 以B为单位  content代表进程的字符串
+    {
+        int needBlock = content.size();
+        Thread tmp;
+        tmp.id = threadsID++,tmp.name = threadName;
+        if(needBlock<=blocks.size())  //空闲块够分配
+        {
+            
+            int j=blocks.size()-1;
+            for(int i=0;i<needBlock;i++)
             {
-                return i; // Return the block if found
+                MemoryBlock newBlock = {blocks[j],false,""+content[i]};  //找到空闲内存
+                tmp.blocks.push_back(newBlock);                          //填入相关信息
+                tmp.page_table[i]=PageTableEntry{blocks[j],0,tmp.id,true,get_current_time()};
+                LRUblocks[blocks[j]] = {1, get_current_time(), tmp.id, i};  //记录最后一次出现的时间和是否空闲
+                blocks.pop_back(),j--;                      //弹出记录的空闲内存
+            }
+            threads[tmp.id] = tmp;
+        }
+        else     //不够分配
+        /* 
+        1 把当前空闲块分配完    2 根据lru算法寻找出现时间最早的    3 将内存块调出内存 放入磁盘
+         */
+        {
+            printf("We don't have enough blocks and will use LRU algrothirm to find available blocks\n");
+            Thread tmp;
+            tmp.id = threadsID++,tmp.name = threadName;
+            int j=blocks.size()-1, nowsize = blocks.size();
+            for(int i=0;i<nowsize;i++)
+            {
+                MemoryBlock newBlock = {blocks[j],false,""+content[i]};  //找到空闲内存
+                tmp.blocks.push_back(newBlock);                          //填入相关信息
+                tmp.page_table[i]=PageTableEntry{blocks[j],0,tmp.id,true,get_current_time()};
+                LRUblocks[blocks[j]] = {1, get_current_time(), tmp.id, i};  //记录最后一次出现的时间和是否空闲
+                blocks.pop_back(),j--;                      //弹出记录的空闲内存
+            }
+            for (int i=nowsize;i<needBlock;i++)
+            {
+                int findBlock = findLRUblock();     //需要把这个块置换出去
+                LruBlock lrublock = LRUblocks[findBlock];
+                threads[lrublock.thread_id].page_table[lrublock.page_id].in_memory = 0;
+                threads[lrublock.thread_id].page_table[lrublock.page_id].disk_id = findDiskBlock(threads[lrublock.thread_id].page_table[lrublock.page_id].thread_id, threads[lrublock.thread_id].page_table[lrublock.page_id].memory_block_id);
+                LRUblocks[findBlock].tim = get_current_time();
+
+                int avaBlock = threads[lrublock.thread_id].page_table[lrublock.page_id].memory_block_id;
+                MemoryBlock newBlock = {avaBlock,false,""+content[i]};
+                tmp.blocks.push_back(newBlock);
+                tmp.page_table[i]=PageTableEntry{avaBlock,0,tmp.id,true,get_current_time()};
+            }
+            threads[tmp.id] = tmp;
+        }
+    }
+    int findDiskBlock(int thread_id, int pageid)
+    {
+        for (int i=0;i<=diskEnd-diskStart;i++)
+        {
+            if (disks[i].first == 0)
+            {
+                disks[i] = {thread_id, pageid};
+                return i;
             }
         }
-        return -1; // Return -1 if no free block is found
+    }
+    int findLRUblock()  //无空闲的内存块需要置换 找最久没有使用过的
+    {
+        int maxn=INF,choice_id=-1;
+        for (int i=0;i<NUM_MEMORY_BLOCKS;i++)
+        {
+            if (LRUblocks[i].tim<maxn)
+                maxn = LRUblocks[i].tim, choice_id=i;
+        }
+        return choice_id;
+    }
+    // 内存回收    将这个进程从threads的map中去掉 并把这些空闲的块给腾出来
+    void deleteBlock(int threadID)
+    {
+        Thread thread = threads[threadID];
+        threads.erase(threadID);
+        for (auto&page :thread.page_table)
+        {
+            if(page.second.in_memory)         //在内存中就释放
+            {
+                blocks.push_back(page.second.memory_block_id);
+                disks[page.second.disk_id].first = 0;
+            }
+        }
+    }
+    void acessPage(int thread_id, int page_num)  //访问某个进程的某个页表 需要用到页面置换算法
+    {
+        Thread thread = threads[thread_id];
+        if(thread.page_table[page_num].in_memory)
+        {
+            LRUblocks[thread.page_table[page_num].memory_block_id].tim = get_current_time();
+        }
+        else 
+        {
+            //1 还有空闲的内存
+            if(blocks.size() > 0)
+            {
+                int j=blocks.size()-1, blockId = blocks[j];
+                j--, blocks.pop_back();
+                for (int i=0;i<=diskEnd-diskStart;i++)
+                {
+                    if (disks[i].first == thread_id && disks[i].second == page_num)
+                    {
+                        disks[i].first = 0;
+                        break;
+                    }
+                }
+                LRUblocks[blockId] = {true,get_current_time(),thread_id,page_num};
+                PageTableEntry& now_page = threads[thread_id].page_table[page_num];
+                now_page = {blockId, 0, thread_id, true, get_current_time()};
+            }
+            else //无空闲内存 需要用到页面置换算法
+            {
+                int block_id = findLRUblock();    //置换的内存块
+                LruBlock& lrublock = LRUblocks[block_id];
+                threads[lrublock.thread_id].page_table[lrublock.page_id].in_memory = false;
+                threads[lrublock.thread_id].page_table[lrublock.page_id].disk_id = findDiskBlock(lrublock.thread_id, lrublock.page_id);
+                lrublock.tim = get_current_time(), lrublock.thread_id = thread_id, lrublock.page_id = page_num;
+
+                threads[lrublock.thread_id].page_table[lrublock.page_id]={block_id, 0, thread_id, true, get_current_time()};
+            }
+        }
     }
 
-    // 内存回收的LRU算法
-    //  Private helper function to find the least recently used block for a given thread
-    int findLRUBlock(Thread &thread)
+    int get_current_time()  //获取当前时间 主要是为LRU算法服务
     {
-        int lru_block_id = -1;          // ID of the least recently used block
-        int min_access_count = INT_MAX; // Minimum access count
-
-        // Iterate through the page table of the thread
-        for (auto &entry : thread.page_table)
-        {
-            // Check if the current entry is valid and has a smaller access count
-            if (entry.second.is_valid && entry.second.access_count < min_access_count)
-            {
-                lru_block_id = entry.first;                   // Update the least recently used block ID
-                min_access_count = entry.second.access_count; // Update the minimum access count
-            }
-        }
-        return lru_block_id; // Return
+        return (int)time(NULL);
     }
 };
-
-/** 以下代码为LRU算法的实例代码，不能直接使用，需要修改！*/
-const int NUM_PAGES = 10; // 页表中的页面数量
-// 页表
-// PageTableEntry page_table[NUM_PAGES];
-
-// 获取当前时间
-int get_current_time()
-{
-    return (int)time(NULL);
-}
-
-// 模拟访问某个页面
-void access_page(int page_num)
-{
-
-    // 如果页面不在内存中，则将其调入内存
-    if (!page_table[page_num].in_memory)
-    {
-        // TODO：如果内存中有空闲块，则为进程分配一个空闲块，修改相应表项
-        // 找到内存中最近最少使用的页面
-
-        // 如果没有空闲块，执行以下代码：
-        int oldest_page = 0;
-        for (int i = 1; i < NUM_PAGES; i++)
-        {
-            if (page_table[i].last_access_time < page_table[oldest_page].last_access_time)
-            {
-                oldest_page = i;
-            }
-        }
-        // 将最近最少使用的页面调出内存
-        page_table[oldest_page].in_memory = false;
-        // 将新页面调入内存
-        page_table[page_num].in_memory = true;
-    }
-    // 更新页面的最后访问时间
-    page_table[page_num].last_access_time = get_current_time();
-}
-/** LRU算法实例代码结束*/
