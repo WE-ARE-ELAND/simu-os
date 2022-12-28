@@ -16,7 +16,7 @@ class DirectoryManage
         string account;
         string password;
         int state;
-    };
+    }User;
     typedef struct File {
         string name;//文件名
         string context;//文件内容
@@ -49,6 +49,9 @@ class DirectoryManage
         Directory* parentDirectory;//父目录
     }DirectoryEntry;
 public:
+    void login();//用户登录函数
+    User QueryUser(string account, string password);//查询用户函数
+
     void CreateRootDirectory();//创建根目录
 
     void tree(Directory* curDir,int level);//显示当前目录的树形结构
