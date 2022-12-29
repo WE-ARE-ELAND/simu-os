@@ -156,13 +156,13 @@ short DiskManager::allocateBlock()
  * @param num_block 磁盘块块号
  * @param data 需要写入的数据，目前要求是字符型
  */
-void DiskManager::writeBlock(short num_block, char data)
+void DiskManager::writeBlock(short num_block, string data)
 {
     MyDisk[num_block].data = data;
-//     fstream fs("Disk.txt", ios::binary | ios::out);
-//     fs.seekp(, ios::beg);
-//     fs.write("!!!", 3);
-//     fs.close();
+    //     fstream fs("Disk.txt", ios::binary | ios::out);
+    //     fs.seekp(, ios::beg);
+    //     fs.write("!!!", 3);
+    //     fs.close();
 }
 
 /**
@@ -170,9 +170,9 @@ void DiskManager::writeBlock(short num_block, char data)
  * @param num_block 磁盘块块号
  * @return data 读取的数据
  */
-string DiskManager::read_disk_block(short block_num)
+string DiskManager::readBlock(short block_num)
 {
-        return MyDisk[block_num].data;
+    return MyDisk[block_num].data;
 }
 
 /**
@@ -187,13 +187,13 @@ void DiskManager::freeBlock(short num_block)
     // todo 2. 修改成组连接法的数据结构
     if (fatList[num_block] == -2)
     {
-            cout << "磁盘块已经空闲" << endl;
-            return;
+        cout << "磁盘块已经空闲" << endl;
+        return;
     }
     int k = 0;
     while (freeBlocks[k][0] == 100)
     {
-            k = freeBlocks[k][1];
+        k = freeBlocks[k][1];
     }
     freeBlocks[k][freeBlocks[k][0] + 2] = num_block;
     freeBlocks[k][0]++;
@@ -202,11 +202,11 @@ void DiskManager::freeBlock(short num_block)
     // 3. 修改空闲块数
     if (num_block < 900)
     {
-            FreeDataBlockNum--;
+        FreeDataBlockNum++;
     }
     else
     {
-            FreeSwapBlockNum--;
+        FreeSwapBlockNum++;
     }
 }
 
@@ -219,7 +219,7 @@ void DiskManager::freeBlock(short num_block)
  * @param data 写入的数据
  * @return 空间是否充足
  */
-short DiskManager::AllocateBlocks(string fileName, int size, string data)
+short AllocateBlocks(string fileName, int size, string data)
 {
     // 1. 空闲磁盘块不足以存储相应大小的文件
     if (size > FreeSwapBlockNum)
@@ -227,18 +227,29 @@ short DiskManager::AllocateBlocks(string fileName, int size, string data)
         return -1;
     }
     // 2. 分配相应大小的磁盘块
-    int num_block, tmp_num_block, index = 0; // 动态分配的块号, 上一个分配的磁盘块 索引号；
+    short num_block, tmp_num_block, allocNum; // 动态分配的块号, 上一个分配的磁盘块, 最终分配的第一个磁盘块
+    int index = 0;                            // 索引号；
     while (size--)
     {
         // 2.1 分配磁盘块
         num_block = allocateBlock();
-        writeBlock(num_block, data[index]);
-        // MyDisk[num_block] = data[index];
+        if (index < data.size())
+        {
+            if (data.size() < 16)
+            {
+                writeBlock(num_block, data.substr(index, data.size()));
+            }
+            else
+            {
+                writeBlock(num_block, data.substr(index, 16));
+            }
+        }
         // 2.2 将分配的盘块号写入FAT表
         {
             if (index == 0)
             {
-                DiskManager::fileNameToNumOfBlock[fileName] = num_block;
+                allocNum = num_block;
+                fileNameToNumOfBlock[fileName] = num_block;
             }
             else
             {
@@ -246,10 +257,10 @@ short DiskManager::AllocateBlocks(string fileName, int size, string data)
             }
             tmp_num_block = num_block;
         }
-        index++;
+        index += 16;
     }
     fatList[num_block] = -1;
-    return 1;
+    return allocNum;
 }
 
 /**
@@ -280,12 +291,9 @@ void DiskManager::DeallocateBlocks(string fileName)
  * todo 保存数据到交换区, 可以指定位置吗？
  * @param data 内存中的数据
  */
-void DiskManager::writeSwapBlock(short blockNum, char buffer)
+void DiskManager::writeSwapBlock(short blockNum, string &buffer)
 {
     MyDisk[blockNum].data = buffer;
-    // 更新数据
-    // fatList[blockNum] = -1;
-    // FreeSwapBlockNum--;
 }
 
 void DiskManager::readSwapBlock(short blockNum, char &buffer)
@@ -350,11 +358,11 @@ void DiskManager::dumpFile()
 /**
  * 测试代码
  */
-int main()
-{
-    DiskManager::getInstance()->PrintMyDisk();
-    string data = "1234xxzz5678ccvv9999oooo0x0xcccc1234xxzz5678ccvv9999oooo0x0xcccc";
-    DiskManager::getInstance()->AllocateBlocks("hello.md", 16, data);
-    DiskManager::getInstance()->PrintMyDisk();
-    return 0;
-}
+// int main()
+// {
+//     short num_block = allocate();
+//     writeBlock(num_block, "hello world");
+//     cout << readBlock(num_block);
+//     cout << fatList[num_block];
+//     return 0;
+// }

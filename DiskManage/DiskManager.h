@@ -24,7 +24,7 @@ class DiskManager
 public:
     DiskBlock MyDisk[1024];                             // 磁盘，有1024个块
     std::vector<short> fatList;                         // 文件分配表，默认为-2空闲
-    std::map<std::string, int> fileNameToNumOfBlock;    // 文件名与FAT表的映射
+    std::map<std::string, short> fileNameToNumOfBlock;    // 文件名与FAT表的映射
     short freeBlocks[10][101];                                // 空闲块组10组，每组最多100个空闲块，第一位存空闲块数，第二位存上一组组号
     int FreeDataBlockNum;                               // 空闲数据区的块数
     int FreeSwapBlockNum;                               // 空闲交换区的块数
@@ -34,8 +34,8 @@ public:
     static DiskManager *getInstance();
     // 最微操作
     short allocateBlock();
-    void writeBlock(short num_block, char data);
-    std::string read_disk_block(short block_num);
+    void writeBlock(short num_block, std::string data);
+    std::string readBlock(short block_num);
     void freeBlock(short num_block);
     // 外部函数
     short AllocateBlocks(std::string fileName, int size, std::string data);
