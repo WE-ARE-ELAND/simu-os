@@ -503,13 +503,13 @@ string DirectoryManage::GetPath(Directory* curDir) {
 }
 
 //create创建文件
-DirectoryManage::File DirectoryManage::CreateFile(string name) {
+DirectoryManage::File* DirectoryManage::CreateFile(string name) {
 	//检查文件是否重名
 	DirectoryEntry* p = workDir->firstChildFile;
 	while (p) {
 		if (p->file.name == name) {
 			cout << "该文件名称已存在，请更改文件名后重新创建文件！\n";
-			return;
+			return NULL;
 		}
 		p = p->nextFile;
 	}
@@ -525,7 +525,7 @@ DirectoryManage::File DirectoryManage::CreateFile(string name) {
 	newFile->owner = user.name;
 	newFile->canRead = user.userRight;
 	newFile->canWrite = user.userRight;
-	return *newFile;
+	return newFile;
 	//执行数据生成线程,传递的参数有File newFile
 	//thread t(data_generation_thread); // 运行到这边就开一个新的线程执行data_generation_thread函数
 	//t.join();
@@ -579,7 +579,7 @@ void DirectoryManage::DeleteFile(string name) {
 }
 
 //type显示文件内容，可读文件时才能读
-DirectoryManage::File DirectoryManage::ReadFile(string path) {
+DirectoryManage::File* DirectoryManage::ReadFile(string path) {
 	//读取文件相对路径
 	queue<string> Path;
 	string curPath = "";
@@ -607,11 +607,11 @@ DirectoryManage::File DirectoryManage::ReadFile(string path) {
 						//权限判断
 						if (t->file.canRead != 1 && t->file.canRead != user.userRight) {
 							cout << "用户权限不足，无法查看该文件内容！\n";
-							return;
+							return NULL;
 						}
 						//输出文件内容
 						cout << t->file.context<<"\n";
-						return t->file;
+						return &t->file;
 					}
 					t = t->nextFile;
 				}
@@ -634,10 +634,12 @@ DirectoryManage::File DirectoryManage::ReadFile(string path) {
 			}
 		}
 	}
+	cout << "路径有误，或不存在该文件！\n";
+	return NULL;
 }
 
 //echo写文件，可写文件时才能写
-DirectoryManage::File DirectoryManage::WriteFile(string name) {
+DirectoryManage::File* DirectoryManage::WriteFile(string name) {
 	if (workDir->firstChildFile) {
 		DirectoryEntry* p = workDir->firstChildFile;
 		while (p) {
@@ -645,7 +647,7 @@ DirectoryManage::File DirectoryManage::WriteFile(string name) {
 				//权限判断
 				if (p->file.canWrite != 1 && p->file.canWrite != user.userRight) {
 					cout << "用户权限不足，无法编写该文件内容！\n";
-					return;
+					return NULL;
 				}
 				cout << "请输入文件内容：\n";
 				string context;
@@ -653,16 +655,17 @@ DirectoryManage::File DirectoryManage::WriteFile(string name) {
 				getline(cin, context);
 				p->file.context += context;
 				cout << "写文件成功！\n";
-				return p->file;
+				return &p->file;
 			}
 			p = p->nextFile;
 		}
 	}
 	cout << "不存在'" << name << "'文件！\n";
+	return NULL;
 }
 
 //open文件的打开
-DirectoryManage::File DirectoryManage::OpenFile(string name) {
+DirectoryManage::File* DirectoryManage::OpenFile(string name) {
 	int flag = 0;
 	DirectoryEntry* p = NULL;
 	if (workDir->firstChildFile) {
@@ -677,12 +680,13 @@ DirectoryManage::File DirectoryManage::OpenFile(string name) {
 	}
 	if (flag == 0) {
 		cout << "不存在'" << name << "'文件\n";
-		return;
+		return NULL;
 	}
 	cout << "打开文件成功！\n";
+	return &p->file;
 }
 //close文件的关闭
-DirectoryManage::File DirectoryManage::CloseFile(string name) {
+DirectoryManage::File* DirectoryManage::CloseFile(string name) {
 	int flag = 0;
 	DirectoryEntry* p = NULL;
 	if (workDir->firstChildFile) {
@@ -697,7 +701,8 @@ DirectoryManage::File DirectoryManage::CloseFile(string name) {
 	}
 	if (flag == 0) {
 		cout << "不存在'" << name << "'文件\n";
-		return;
+		return NULL;
 	}
 	cout << "关闭文件成功！\n";
+	return &p->file;
 }
