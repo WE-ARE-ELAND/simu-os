@@ -503,7 +503,7 @@ string DirectoryManage::GetPath(Directory* curDir) {
 }
 
 //create创建文件
-void DirectoryManage::CreateFile(string name) {
+DirectoryManage::File DirectoryManage::CreateFile(string name) {
 	//检查文件是否重名
 	DirectoryEntry* p = workDir->firstChildFile;
 	while (p) {
@@ -525,10 +525,11 @@ void DirectoryManage::CreateFile(string name) {
 	newFile->owner = user.name;
 	newFile->canRead = user.userRight;
 	newFile->canWrite = user.userRight;
+	return *newFile;
 	//执行数据生成线程,传递的参数有File newFile
 	//thread t(data_generation_thread); // 运行到这边就开一个新的线程执行data_generation_thread函数
 	//t.join();
-	CreateDirEntry(*newFile, 4);
+	//CreateDirEntry(*newFile, 4);
 }
 //为文件建立目录项
 void DirectoryManage::CreateDirEntry(File file, int first_block) {
@@ -578,7 +579,7 @@ void DirectoryManage::DeleteFile(string name) {
 }
 
 //type显示文件内容，可读文件时才能读
-void DirectoryManage::ReadFile(string path) {
+DirectoryManage::File DirectoryManage::ReadFile(string path) {
 	//读取文件相对路径
 	queue<string> Path;
 	string curPath = "";
@@ -610,9 +611,7 @@ void DirectoryManage::ReadFile(string path) {
 						}
 						//输出文件内容
 						cout << t->file.context<<"\n";
-						//访问内存的线程,传递的参数为File file
-
-						return;
+						return t->file;
 					}
 					t = t->nextFile;
 				}
@@ -638,7 +637,7 @@ void DirectoryManage::ReadFile(string path) {
 }
 
 //echo写文件，可写文件时才能写
-void DirectoryManage::WriteFile(string name) {
+DirectoryManage::File DirectoryManage::WriteFile(string name) {
 	if (workDir->firstChildFile) {
 		DirectoryEntry* p = workDir->firstChildFile;
 		while (p) {
@@ -654,9 +653,7 @@ void DirectoryManage::WriteFile(string name) {
 				getline(cin, context);
 				p->file.context += context;
 				cout << "写文件成功！\n";
-				//访问内存的线程,传递的参数为File file
-
-				return;
+				return p->file;
 			}
 			p = p->nextFile;
 		}
@@ -665,7 +662,7 @@ void DirectoryManage::WriteFile(string name) {
 }
 
 //open文件的打开
-void DirectoryManage::OpenFile(string name) {
+DirectoryManage::File DirectoryManage::OpenFile(string name) {
 	int flag = 0;
 	DirectoryEntry* p = NULL;
 	if (workDir->firstChildFile) {
@@ -682,13 +679,10 @@ void DirectoryManage::OpenFile(string name) {
 		cout << "不存在'" << name << "'文件\n";
 		return;
 	}
-
-	//执行线程：将文件调入内存,传递的参数为File file
-
 	cout << "打开文件成功！\n";
 }
 //close文件的关闭
-void DirectoryManage::CloseFile(string name) {
+DirectoryManage::File DirectoryManage::CloseFile(string name) {
 	int flag = 0;
 	DirectoryEntry* p = NULL;
 	if (workDir->firstChildFile) {
@@ -705,8 +699,5 @@ void DirectoryManage::CloseFile(string name) {
 		cout << "不存在'" << name << "'文件\n";
 		return;
 	}
-
-	//回收内存的线程，将文件从内存中删除,传递的参数为File file
-
 	cout << "关闭文件成功！\n";
 }
