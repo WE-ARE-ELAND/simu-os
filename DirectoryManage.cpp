@@ -7,7 +7,12 @@ DirectoryManage::DirectoryManage()
 	workDir = NULL;
 	rootDir = NULL;
 	path = "";
-	user= { "登陆失败",0,"登陆失败", "登陆失败", 0 };
+	// user = {"登陆失败", 0, "登陆失败", "登陆失败", 0};
+    	user.name = "登陆失败";
+   	user.userRight = 0;
+    	user.account = "登陆失败";
+    	user.password = "登陆失败";
+    	user.state = 0;
 }
 
 //用户登陆函数
