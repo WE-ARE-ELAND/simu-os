@@ -1,7 +1,7 @@
 #include <thread>
 #include <chrono>
 // #include "memoryManage.h"
-#include "directoryManage.h"
+#include "DirectoryManage.h"
 // #include "DiskManager.h"
 
 using namespace std;

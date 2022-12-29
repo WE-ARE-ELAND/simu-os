@@ -10,6 +10,7 @@ using namespace std;
 
 class DirectoryManage
 {
+    public:
     typedef struct User {
         string name;
         int userRight;
