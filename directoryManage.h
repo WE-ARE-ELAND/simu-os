@@ -27,7 +27,7 @@ class DirectoryManage
         int canRead;//文件读权限
         int canWrite;//文件写权限
     }File;
-    typedef struct DirectoryEntry;
+    struct DirectoryEntry;
     typedef struct Directory
     {
         string name;//目录名
@@ -49,6 +49,7 @@ class DirectoryManage
         Directory* parentDirectory;//父目录
     }DirectoryEntry;
 public:
+    DirectoryManage();
     void login();//用户登录函数
     User QueryUser(string account, string password);//查询用户函数
 
