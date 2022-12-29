@@ -1,0 +1,9 @@
+DirectoryManage_test:DirectoryManage_test.o DirectoryManage.o
+	g++ -std=c++11 *.o -o DirectoryManage_test
+	./DirectoryManage_test
+	rm *.o
+	rm DirectoryManage_test
+DirectoryManage_test.o:DirectoryManage_test.cpp
+	g++ -std=c++11 -c DirectoryManage_test.cpp -o DirectoryManage_test.o
+DirectoryManage.o:DirectoryManage.cpp
+	g++ -std=c++11 -c DirectoryManage.cpp -o DirectoryManage.o

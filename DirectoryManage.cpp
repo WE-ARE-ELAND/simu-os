@@ -325,7 +325,7 @@ void DirectoryManage::dirFile(string name) {
 			if (ptr->file.name == name) {
 				// char dt[30];
 				// ctime_s(dt, sizeof dt, &ptr->file.create_time);
-				// cout << "创建时间：" << dt<<"\n";
+				cout << "创建时间：" << ctime(&ptr->file.create_time)<<"\n";
 				cout << "文件名：" << ptr->file.name << "\n";
 				cout << "文件大小：" << ptr->file.size<<"\n";
 				cout << "文件属性：";
