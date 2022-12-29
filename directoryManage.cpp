@@ -1,6 +1,16 @@
 #include "DirectoryManage.h"
 
 
+//构造函数
+DirectoryManage::DirectoryManage()
+{
+	workDir = NULL;
+	rootDir = NULL;
+	path = "";
+	user= { "登陆失败",0,"登陆失败", "登陆失败", 0 };
+}
+
+//用户登陆函数
 void DirectoryManage::login()
 {
 	string account;
@@ -17,8 +27,11 @@ void DirectoryManage::login()
 		system("cls");
 		login();
 	}
+	CreateRootDirectory();
+	MakeDir(user.name);
 }
 
+//用户查询函数
 DirectoryManage::User DirectoryManage::QueryUser(string account, string password)
 {
 	User userList[] = {
@@ -48,6 +61,7 @@ DirectoryManage::User DirectoryManage::QueryUser(string account, string password
 
 //创建根目录
 void DirectoryManage::CreateRootDirectory() {
+	rootDir = new Directory();
 	rootDir->name = "root";
 	rootDir->firstChildDirectory = NULL;
 	rootDir->firstChildFile = NULL;
@@ -58,6 +72,7 @@ void DirectoryManage::CreateRootDirectory() {
 	rootDir->canRead = 1;//根目录可读
 	rootDir->canWrite = 0;//根目录不可写
 	cout<<"创建根目录成功！\n";
+	workDir = rootDir;
 }
 
 //tree显示当前目录的树形结构
@@ -69,7 +84,7 @@ void DirectoryManage::tree(Directory* curDir, int level)
 	for (int i = 0; i < level; i++) {
 		cout << "|      ";
 	}
-	if(curDir!=workDir) cout << "|--- " << curDir->name;
+	if(curDir!=workDir) cout << "|--- " << curDir->name<<"\n";
 	if (curDir->firstChildDirectory) {
 		Directory* ptr = curDir->firstChildDirectory;
 		while (ptr) {
@@ -80,10 +95,10 @@ void DirectoryManage::tree(Directory* curDir, int level)
 	if (curDir->firstChildFile) {
 		DirectoryEntry* p = curDir->firstChildFile;
 		while (p) {
-			for (int i = 0; i < level; i++) {
+			for (int i = 0; i < level+1; i++) {
 				cout << "|      ";
 			}
-			cout << "|--- " << p->file.name;
+			cout << "|--- " << p->file.name << "\n";
 			p = p->nextFile;
 		}
 	}
@@ -98,7 +113,7 @@ void DirectoryManage::MakeDir(string name) {
 	newDir->lastChildFile = NULL;
 	newDir->frontDirectory = NULL;
 	newDir->nextDirectory = NULL;
-	newDir->parentDirectory = NULL;
+	newDir->parentDirectory = workDir;
 	newDir->canRead = user.userRight;
 	newDir->canWrite = user.userRight;
 
@@ -136,8 +151,8 @@ void DirectoryManage::cdDir(string path)
 	else {//切换到当前目录某一路径下的子目录中
 		queue<string> Path;
 		string curPath="";
-		for (int i = 0; i < path.length(); i++) {
-			if (path[i] != '\\' || path[i] != '/') {
+		for (int i = 0; i < (int)path.length(); i++) {
+			if (path[i] != '\\' && path[i] != '/') {
 				curPath += path[i];
 			}
 			else {
@@ -145,9 +160,7 @@ void DirectoryManage::cdDir(string path)
 				curPath = "";
 			}
 		}
-		if (path.length() != 0 && Path.empty()) {
-			Path.push(path);
-		}
+		Path.push(curPath);
 		queue<Directory*> q;
 		q.push(workDir);
 		while (!q.empty()) {
@@ -186,39 +199,27 @@ void DirectoryManage::cdDir(string path)
 
 //rd删除目录：删除当前目录中的子目录
 void DirectoryManage::rd(string name) {
-	queue<Directory*> q;
-	q.push(workDir);
-	while (!q.empty()) {
-		Directory* p = q.front();
-		q.pop();
+	if (workDir->firstChildDirectory == NULL) {
+		cout << "当前目录无子目录，不存在你要删除的目录！\n";
+		return;
+	}
+	Directory* p = workDir->firstChildDirectory;
+	while (p) {
 		if (p->name == name) {
 			if (workDir->firstChildDirectory == p) {
 				workDir->firstChildDirectory = p->nextDirectory;
-				p->nextDirectory->frontDirectory = NULL;
+				if (p->nextDirectory) p->nextDirectory->frontDirectory = NULL;
 				DeleteDir(p);
 			}
 			else {
-				Directory* ptr = workDir->firstChildDirectory;
-				while (ptr->nextDirectory) {
-					ptr = ptr->nextDirectory;
-					if (ptr == p) {
-						p->frontDirectory->nextDirectory = p->nextDirectory;
-						if (p->nextDirectory) p->nextDirectory->frontDirectory = p->frontDirectory;
-						DeleteDir(p);
-					}
-				}
+				p->frontDirectory->nextDirectory = p->nextDirectory;
+				if (p->nextDirectory) p->nextDirectory->frontDirectory = p->frontDirectory;
+				DeleteDir(p);
 			}
 			cout << "目录'" << name << "'删除成功！\n";
 			return;
 		}
-		if (p->firstChildDirectory) {
-			p = p->firstChildDirectory;
-			q.push(p);
-			while (p->nextDirectory) {
-				p = p->nextDirectory;
-				q.push(p);
-			}
-		}
+		p = p->nextDirectory;
 	}
 	cout << "不存在'" << name << "'目录\n";
 }
@@ -287,15 +288,15 @@ void DirectoryManage::ListAll() {
 			cout << path << "下子目录及文件\n";
 		}
 		if (p->firstChildDirectory) {
-			p = p->firstChildDirectory;
-			cout << '\t' << p->name << '\t';
+			Directory *ptr = p->firstChildDirectory;
+			cout << '\t' << ptr->name << '\t';
 			cout << "<DIR>\n";
-			q.push(p);
-			while (p->nextDirectory) {
-				p = p->nextDirectory;
-				cout << '\t' << p->name << '\t';
+			q.push(ptr);
+			while (ptr->nextDirectory) {
+				ptr = ptr->nextDirectory;
+				cout << '\t' << ptr->name << '\t';
 				cout << "<DIR>\n";
-				q.push(p);
+				q.push(ptr);
 			}
 		}
 		if (p->firstChildFile) {
@@ -317,10 +318,12 @@ void DirectoryManage::dirFile(string name) {
 		DirectoryEntry* ptr = workDir->firstChildFile;
 		while (ptr) {
 			if (ptr->file.name == name) {
-				cout << "创建时间：" << ctime(&ptr->file.create_time)<<"\n";
+				char dt[30];
+				ctime_s(dt, sizeof dt, &ptr->file.create_time);
+				cout << "创建时间：" << dt<<"\n";
 				cout << "文件名：" << ptr->file.name << "\n";
-				cout << "文件大小" << ptr->file.size<<"\n";
-				cout << "文件属性";
+				cout << "文件大小：" << ptr->file.size<<"\n";
+				cout << "文件属性：";
 				if (ptr->file.canRead == user.userRight || ptr->file.canRead == 1) {
 					cout << "可读  ";
 				}
@@ -329,6 +332,7 @@ void DirectoryManage::dirFile(string name) {
 					cout << "可写\n";
 				}
 				else cout << "不可写\n";
+				return;
 			}
 			ptr = ptr->nextFile;
 		}
@@ -376,8 +380,8 @@ void DirectoryManage::dirPath(string path)
 {
 	queue<string> Path;
 	string curPath = "";
-	for (int i = 0; i < path.length(); i++) {
-		if (path[i] != '\\' || path[i] != '/') {
+	for (int i = 0; i < (int)path.length(); i++) {
+		if (path[i] != '\\' && path[i] != '/') {
 			curPath += path[i];
 		}
 		else {
@@ -385,9 +389,7 @@ void DirectoryManage::dirPath(string path)
 			curPath = "";
 		}
 	}
-	if (path.length() != 0 && Path.empty()) {
-		Path.push(path);
-	}
+	Path.push(curPath);
 	queue<Directory*> q;
 	q.push(workDir);
 	while (!q.empty()) {
@@ -515,6 +517,7 @@ void DirectoryManage::CreateFile(string name) {
 	File* newFile=new File();
 	newFile->name = name;
 	cout << "请输入文件内容：\n";
+	getchar();
 	getline(cin,newFile->context);
 	newFile->size = newFile->context.length();
 	time(&newFile->create_time);//创建文件的时间
@@ -525,7 +528,7 @@ void DirectoryManage::CreateFile(string name) {
 	//执行数据生成线程,传递的参数有File newFile
 	//thread t(data_generation_thread); // 运行到这边就开一个新的线程执行data_generation_thread函数
 	//t.join();
-
+	CreateDirEntry(*newFile, 4);
 }
 //为文件建立目录项
 void DirectoryManage::CreateDirEntry(File file, int first_block) {
@@ -533,10 +536,15 @@ void DirectoryManage::CreateDirEntry(File file, int first_block) {
 	newDirEntry->file = file;
 	newDirEntry->first_block = first_block;
 	newDirEntry->frontFile = workDir->lastChildFile;
-	workDir->lastChildFile->nextFile = newDirEntry;
-	workDir->lastChildFile = newDirEntry;
 	newDirEntry->nextFile = NULL;
 	newDirEntry->parentDirectory = workDir;
+	if (workDir->firstChildFile==NULL) {
+		workDir->firstChildFile = newDirEntry;
+	}
+	if (workDir->lastChildFile) {
+		workDir->lastChildFile->nextFile = newDirEntry;
+	}
+	workDir->lastChildFile = newDirEntry;
 }
 
 
@@ -548,7 +556,7 @@ void DirectoryManage::DeleteFile(string name) {
 			if (ptr->file.name == name) {
 				if (ptr == workDir->firstChildFile) {
 					workDir->firstChildFile = ptr->nextFile;
-					ptr->nextFile->frontFile = NULL;
+					if(ptr->nextFile) ptr->nextFile->frontFile = NULL;
 					delete ptr;
 				}
 				else if (ptr == workDir->lastChildFile) {
@@ -574,8 +582,8 @@ void DirectoryManage::ReadFile(string path) {
 	//读取文件相对路径
 	queue<string> Path;
 	string curPath = "";
-	for (int i = 0; i < path.length(); i++) {
-		if (path[i] != '\\' || path[i] != '/') {
+	for (int i = 0; i < (int)path.length(); i++) {
+		if (path[i] != '\\' && path[i] != '/') {
 			curPath += path[i];
 		}
 		else {
@@ -583,10 +591,7 @@ void DirectoryManage::ReadFile(string path) {
 			curPath = "";
 		}
 	}
-	if (path.length() != 0 && Path.empty()) {
-		Path.push(path);
-	}
-
+	Path.push(path);
 	//读取文件信息
 	queue<Directory*> q;
 	q.push(workDir);
@@ -604,7 +609,7 @@ void DirectoryManage::ReadFile(string path) {
 							return;
 						}
 						//输出文件内容
-						cout << t->file.context;
+						cout << t->file.context<<"\n";
 						//访问内存的线程,传递的参数为File file
 
 						return;
@@ -645,6 +650,7 @@ void DirectoryManage::WriteFile(string name) {
 				}
 				cout << "请输入文件内容：\n";
 				string context;
+				getchar();
 				getline(cin, context);
 				p->file.context += context;
 				cout << "写文件成功！\n";
