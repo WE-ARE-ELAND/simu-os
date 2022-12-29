@@ -76,17 +76,17 @@ public:
 
     string GetPath(Directory* curDir);    //获取当前文件夹的路径
 
-    File CreateFile(string name);    //create创建文件
+    File* CreateFile(string name);    //create创建文件
     void CreateDirEntry(File file,int first_block);//为文件建立目录项
 
     void DeleteFile(string name);    //del删除文件：删除文件的目录项
 
-    File ReadFile(string path);    //type读文件，可读文件时才能读
+    File* ReadFile(string path);    //type读文件，可读文件时才能读
 
-    File WriteFile(string name);   //echo写文件，可写文件时才能写
+    File* WriteFile(string name);   //echo写文件，可写文件时才能写
     
-    File OpenFile(string name);    //open文件的打开
-    File CloseFile(string name);    //close文件的关闭
+    File* OpenFile(string name);    //open文件的打开
+    File* CloseFile(string name);    //close文件的关闭
 public:
     Directory* workDir;//当前工作目录
     Directory* rootDir;//根目录
