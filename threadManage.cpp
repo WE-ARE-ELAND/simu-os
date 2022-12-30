@@ -15,11 +15,28 @@ void ThreadManager::data_generation_thread(DirectoryManage::File &newFile)
 
 void ThreadManager::delete_data_thread(string name)
 {
-    cout << "处理中..." << endl;
-    int sleep_time = this->generateNumber(1000, 5000); // 1-5秒的时延，体现多线程机制
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    DIR.DeleteFile(name);
-    /*TODO:回收外存块*/
+    int sleep_time = this->generateNumber(2000, 5000); // 1-5秒的时延，体现多线程机制
+    std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
+    bool isDelFormDir = DIR.DeleteFile(name); // 目录中没有这个文件返回false，有这个文件返回并删除返回true
+    if (isDelFormDir)
+    {
+        cout << "数据删除进程：该文件在目录中删除，正在回收外存..." << endl;
+        sleep_time += 1000;
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
+        /*TODO：回收外存块*/
+    }
+    else
+    {
+        cout << "数据删除进程：不存在该文件！" << endl;
+    }
+}
+
+void ThreadManager::joinAllThreads()
+{
+    for (auto &t : threads)
+    {
+        t.join();
+    }
 }
 
 int ThreadManager::generateNumber(int min, int max)
@@ -27,8 +44,15 @@ int ThreadManager::generateNumber(int min, int max)
     return rand() % (max - min + 1) + min;
 }
 
+// void ThreadManager::myCout(string output)
+// {
+//     cout << output << endl;
+//     refresh();
+// }
+
 ThreadManager::ThreadManager()
 {
+    // 初始化外存，目录，内存等
     initialize();
 }
 
@@ -37,19 +61,29 @@ int ThreadManager::initialize()
     return 0;
 }
 
+void ThreadManager::refresh()
+{
+    string path = "";
+    path = DIR.GetPath(DIR.workDir);
+    cout << "主线程：" << path << ">:";
+}
+
 void ThreadManager::showMenu()
 {
     DIR.login();
-    int sel;
-    cout << "请输入你要实现的功能(输入数字，不要输入命令本身！！！)：\n"
-         << "1.mkdir 2.rmdir 3.cd 4.dir 5.del 6.create 7.tree 8.readFile 9.writeFile 10.rename 11.exit\n";
+    string sel;
+    cout << "请输入你要实现的功能(输入命令）：\n"
+         << "mkdir rmdir cd ls rm touch tree readFile writeFile rename refresh exit\n";
     while (true)
     {
-        string path = "";
-        path = DIR.GetPath(DIR.workDir);
-        cout << path << ">:";
+        refresh();
         cin >> sel;
-        switch (sel)
+        auto it = this->branch_table.find(sel); // 使用unordered_map的find函数来查找对应的整数值
+        if (it == branch_table.end())           // 如果没找到，则使用默认值
+        {
+            it = branch_table.find("default");
+        }
+        switch (it->second)
         {
         case 1:
         {
@@ -86,7 +120,9 @@ void ThreadManager::showMenu()
             string name;
             cout << "请输入文件名：";
             cin >> name;
-            thread t(&ThreadManager::delete_data_thread, this, name);
+            // thread t(&ThreadManager::delete_data_thread, this, name);
+            cout << "后台处理中，您可继续执行其他任务..." << endl;
+            threads.emplace_back(&ThreadManager::delete_data_thread, this, name);
             break;
         }
         case 6:
@@ -129,8 +165,12 @@ void ThreadManager::showMenu()
         }
         case 11:
             exit(0);
+        case 13:
+            break;
         default:
-            exit(0);
+        {
+            cout << "该命令不存在，请重新输入" << endl;
+        }
         }
     }
 }

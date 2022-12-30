@@ -555,7 +555,8 @@ void DirectoryManage::CreateDirEntry(File file, int first_block) {
 
 
 //del删除文件
-void DirectoryManage::DeleteFile(string name) {
+bool DirectoryManage::DeleteFile(string name) {
+    bool flag=false;
 	if (workDir->firstChildFile) {
 		DirectoryEntry* ptr = workDir->firstChildFile;
 		while (ptr) {
@@ -574,13 +575,15 @@ void DirectoryManage::DeleteFile(string name) {
 					ptr->nextFile->frontFile = ptr->frontFile;
 					delete ptr;
 				}
-				cout << "文件"<<name<<"删除成功！\n";
-				return;
+				// cout << "文件"<<name<<"删除成功！\n";
+                flag=true;
+				return flag;
 			}
 			ptr = ptr->nextFile;
 		}
 	}
-	cout << "不存在该文件！\n";
+	// cout << "不存在该文件！\n";
+    return flag;
 }
 
 //type显示文件内容，可读文件时才能读

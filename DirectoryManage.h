@@ -80,7 +80,7 @@ public:
     File* CreateFile(string name);    //create创建文件
     void CreateDirEntry(File file,int first_block);//为文件建立目录项
 
-    void DeleteFile(string name);    //del删除文件：删除文件的目录项
+    bool DeleteFile(string name);    //del删除文件：删除文件的目录项
 
     File* ReadFile(string path);    //type读文件，可读文件时才能读
 
