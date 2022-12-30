@@ -32,19 +32,24 @@ public:
 public:
     DiskManager();
     static DiskManager *getInstance();
+    // 初始化操作
+    void init();
+    void initDisk();
+    void initFat();
+    void initFreeBlocks();
     // 最微操作
     short allocateBlock();
     void writeBlock(short num_block, std::string data);
     std::string readBlock(short block_num);
     void freeBlock(short num_block);
     // 外部函数
-    short AllocateBlocks(std::string fileName, int size, std::string data);
+    int AllocateBlocks(std::string fileName, int size, std::string data);
     void DeallocateBlocks(std::string fileName);
-    std::string ReadFileDataFromDisk(std::string fileName, int size);
-    int SaveMmToSwap(std::string data);
-    void readSwapBlock(short blockNum, char &buffer);
-    void writeSwapBlock(short blockNum, char buffer);
-
-    void PrintMyDisk();
-    void dumpFile();
+    std::string ReadFileDataFromDisk(std::string fileName);
+    void readSwapBlock(short blockNum, std::string &buffer);
+    void writeSwapBlock(short blockNum, std::string buffer);
+    // 输出函数
+    void dumpFile(); // 将磁盘数据写入物理文件
+    void PrintMyDisk(); // 打印磁盘数据
+    void printFreeBlocks(); // 打印空闲盘块状态
 };
