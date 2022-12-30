@@ -1,5 +1,5 @@
 #include "threadManage.h"
-void ThreadManager::data_generation_thread(DirectoryManage::File &newFile)
+void ThreadManager::data_generation_thread(string fileName)
 {
     // 调用磁盘分配的函数,若成功返回1，失败返回-1
     // int status = AllocateBlocks(newFile.name, newFile.size, newFile.context);
@@ -11,6 +11,10 @@ void ThreadManager::data_generation_thread(DirectoryManage::File &newFile)
     // else
     // {
     // }
+    input_mutex.lock();
+    DirectoryManage::File *file = DIR.CreateFile(fileName);
+    input_mutex.unlock();
+    DIR.CreateDirEntry(*file, 60); // 等待磁盘管理的分配盘块的函数
 }
 
 void ThreadManager::delete_data_thread(string name)
@@ -73,11 +77,13 @@ void ThreadManager::showMenu()
     DIR.login();
     string sel;
     cout << "请输入你要实现的功能(输入命令）：\n"
-         << "mkdir rmdir cd ls rm touch tree readFile writeFile rename refresh exit\n";
+         << "mkdir rmdir cd ls rm touch tree readFile writeFile rename refresh quit\n";
     while (true)
     {
+        input_mutex.lock();
         refresh();
         cin >> sel;
+        input_mutex.unlock();
         auto it = this->branch_table.find(sel); // 使用unordered_map的find函数来查找对应的整数值
         if (it == branch_table.end())           // 如果没找到，则使用默认值
         {
@@ -85,7 +91,7 @@ void ThreadManager::showMenu()
         }
         switch (it->second)
         {
-        case 1:
+        case 1: // mkdir
         {
             string name;
             cout << "请输入目录名：";
@@ -94,7 +100,7 @@ void ThreadManager::showMenu()
             break;
         }
 
-        case 2:
+        case 2: // rmdir
         {
             string name;
             cout << "请输入目录名：";
@@ -102,7 +108,7 @@ void ThreadManager::showMenu()
             DIR.rd(name); // 删除当前目录下的目录
             break;
         }
-        case 3:
+        case 3: // cd
         {
             string name;
             cout << "请输入相对路径：";
@@ -110,27 +116,29 @@ void ThreadManager::showMenu()
             DIR.cdDir(name); // 相对路径
             break;
         }
-        case 4:
+        case 4: // ls
         {
             DIR.dir();
             break;
         }
-        case 5:
+        case 5: // rm
         {
             string name;
+            string content;
             cout << "请输入文件名：";
             cin >> name;
             // thread t(&ThreadManager::delete_data_thread, this, name);
-            cout << "后台处理中，您可继续执行其他任务..." << endl;
-            threads.emplace_back(&ThreadManager::delete_data_thread, this, name);
+            cout << "后台处理中，您可继续执行其他命令..." << endl;
+            threads.emplace_back(&ThreadManager::delete_data_thread, this, name); // 创建一个线程，并调用delete_data_thread（）
             break;
         }
-        case 6:
+        case 6: // touch
         {
             string name;
             cout << "请输入文件名：";
             cin >> name;
-            DIR.CreateFile(name);
+            threads.emplace_back(&ThreadManager::data_generation_thread, this, name);
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
             break;
         }
         case 7:
@@ -143,6 +151,8 @@ void ThreadManager::showMenu()
             string path;
             cout << "请输入文件名所在路径：";
             cin >> path;
+            cout << "执行线程：处理中..." << endl;
+            // threads.emplace_back(&ThreadManager::execute_thread,this,path);
             DIR.ReadFile(path);
             break;
         }
@@ -163,7 +173,7 @@ void ThreadManager::showMenu()
             DIR.ren(oldName, newName);
             break;
         }
-        case 11:
+        case 11: // quit
             exit(0);
         case 13:
             break;
