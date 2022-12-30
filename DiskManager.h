@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <algorithm>
 #include <string>
+#include <fstream>
 using namespace std;
 
 const int DISK_SIZE = 40 * 1024; // 磁盘大小为 40KB
@@ -17,22 +18,22 @@ const int NUM_FILE_BLOCKS = 900; // 用于存储文件的磁盘块数为 900 个
  */
 struct DiskBlock
 {
-    int BlockNum; // 块号
-    std::string data;  // 数据
+    int BlockNum;     // 块号
+    std::string data; // 数据
 };
 
 /*
-* 磁盘管理类
-*/
+ * 磁盘管理类
+ */
 class DiskManager
 {
 public:
-    DiskBlock MyDisk[1024];                             // 磁盘，有1024个块
-    vector<short> fatList;                         // 文件分配表，默认为-2空闲
-    unordered_map<string, short> fileNameToNumOfBlock;   // 文件名与FAT表的映射
-    short freeBlocks[10][101];                                // 空闲块组10组，每组最多100个空闲块，第一位存空闲块数，第二位存上一组组号
-    int FreeDataBlockNum;                               // 空闲数据区的块数
-    int FreeSwapBlockNum;                               // 空闲交换区的块数
+    DiskBlock MyDisk[1024];                            // 磁盘，有1024个块
+    vector<short> fatList;                             // 文件分配表，默认为-2空闲
+    unordered_map<string, short> fileNameToNumOfBlock; // 文件名与FAT表的映射
+    short freeBlocks[10][101];                         // 空闲块组10组，每组最多100个空闲块，第一位存空闲块数，第二位存上一组组号
+    int FreeDataBlockNum;                              // 空闲数据区的块数
+    int FreeSwapBlockNum;                              // 空闲交换区的块数
 
 public:
     DiskManager();
@@ -54,7 +55,7 @@ public:
     void readSwapBlock(short blockNum, string &buffer);
     void writeSwapBlock(short blockNum, string buffer);
     // 输出函数
-    void dumpFile(); // 将磁盘数据写入物理文件
-    void PrintMyDisk(); // 打印磁盘数据
+    void dumpFile();        // 将磁盘数据写入物理文件
+    void PrintMyDisk();     // 打印磁盘数据
     void printFreeBlocks(); // 打印空闲盘块状态
 };
