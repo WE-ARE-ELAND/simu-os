@@ -16,10 +16,20 @@ void ThreadManager::data_generation_thread(DirectoryManage::File &newFile)
 void ThreadManager::delete_data_thread(string name)
 {
     cout << "处理中..." << endl;
-    int sleep_time = this->generateNumber(1000, 5000); // 1-5秒的时延，体现多线程机制
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    DIR.DeleteFile(name);
-    /*TODO:回收外存块*/
+    int sleep_time = this->generateNumber(1000, 2000); // 1-5秒的时延，体现多线程机制
+    std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
+    bool isDelFormDir = DIR.DeleteFile(name); // 目录中没有这个文件返回false，有这个文件返回并删除返回true
+    if (isDelFormDir)
+    {
+        cout << "该文件在目录中删除，正在回收外存" << endl;
+        sleep_time += 1000;
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
+        /*TODO：回收外存块*/
+    }
+    else
+    {
+        cout << "不存在该文件！\n";
+    }
 }
 
 int ThreadManager::generateNumber(int min, int max)
