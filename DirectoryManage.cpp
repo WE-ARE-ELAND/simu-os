@@ -555,7 +555,7 @@ void DirectoryManage::CreateDirEntry(File file, int first_block) {
 
 
 //del删除文件
-void DirectoryManage::DeleteFile(string name) {
+bool DirectoryManage::DeleteFile(string name) {
     bool flag=false;
 	if (workDir->firstChildFile) {
 		DirectoryEntry* ptr = workDir->firstChildFile;
@@ -577,7 +577,7 @@ void DirectoryManage::DeleteFile(string name) {
 				}
 				// cout << "文件"<<name<<"删除成功！\n";
                 flag=true;
-				return;
+				return flag;
 			}
 			ptr = ptr->nextFile;
 		}
