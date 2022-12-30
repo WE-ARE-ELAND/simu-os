@@ -35,14 +35,13 @@ struct PageTableEntry
 };
 
 // Data structure to represent a thread （PCB）
-struct Thread
+struct File
 {
     int id;                                             // 进程id
     std::string name;                                   // 进程名字
     std::vector<MemoryBlock> blocks;                            // 进程包含的blocks
     std::unordered_map<int, PageTableEntry> page_table; // 页表： 页号->页表项
 };
-int MemoryManager::threadsID = 1;
 struct LruBlock
 {
     int in_memory, tim, thread_id, page_id;
@@ -54,7 +53,7 @@ public:
     static int threadsID;
     std::vector<int> blocks;         // 空闲的块
     LruBlock LRUblocks[NUM_MEMORY_BLOCKS+5];      //用来记录最后出现的时间和是否空闲
-    std::unordered_map<int, Thread> threads; // 每个进程编号对应的进程
+    std::unordered_map<int, File> threads; // 每个进程编号对应的进程
     pair<int,int> disks[200];                   //记录磁盘的空闲状态 first是否空闲 0 是空闲
 public:
     MemoryManager()
@@ -70,11 +69,11 @@ public:
     void allocateThreads(string threadName, string content)  // size代表进程的大小 以B为单位  content代表进程的字符串
     {
         int needBlock = content.size();
-        Thread tmp;
+        File tmp;
         tmp.id = threadsID++,tmp.name = threadName;
         if(needBlock<=blocks.size())  //空闲块够分配
         {
-            
+            print("Current availavle memory blocks is enough to allocate\n");
             int j=blocks.size()-1;
             for(int i=0;i<needBlock;i++)
             {
@@ -85,6 +84,10 @@ public:
                 blocks.pop_back(),j--;                      //弹出记录的空闲内存
             }
             threads[tmp.id] = tmp;
+            print("We allovate memory blocks as follows:\n");
+            for (auto& block : tmp.blocks)
+                printf("memory block%d    ", block.id);
+            printf("\n");
         }
         else     //不够分配
         /* 
@@ -92,7 +95,7 @@ public:
          */
         {
             printf("We don't have enough blocks and will use LRU algrothirm to find available blocks\n");
-            Thread tmp;
+            File tmp;
             tmp.id = threadsID++,tmp.name = threadName;
             int j=blocks.size()-1, nowsize = blocks.size();
             for(int i=0;i<nowsize;i++)
@@ -103,10 +106,13 @@ public:
                 LRUblocks[blocks[j]] = {1, get_current_time(), tmp.id, i};  //记录最后一次出现的时间和是否空闲
                 blocks.pop_back(),j--;                      //弹出记录的空闲内存
             }
+            printf("We should throw these blocks out:\n");
             for (int i=nowsize;i<needBlock;i++)
             {
                 int findBlock = findLRUblock();     //需要把这个块置换出去
                 LruBlock lrublock = LRUblocks[findBlock];
+                printf("memory position:%d\n",findBlock);
+                
                 threads[lrublock.thread_id].page_table[lrublock.page_id].in_memory = 0;
                 threads[lrublock.thread_id].page_table[lrublock.page_id].disk_id = findDiskBlock(threads[lrublock.thread_id].page_table[lrublock.page_id].thread_id, threads[lrublock.thread_id].page_table[lrublock.page_id].memory_block_id);
                 LRUblocks[findBlock].tim = get_current_time();
@@ -116,6 +122,10 @@ public:
                 tmp.blocks.push_back(newBlock);
                 tmp.page_table[i]=PageTableEntry{avaBlock,0,tmp.id,true,get_current_time()};
             }
+            print("Finally the allovate memory blocks is as follows:\n");
+            for (auto& block : tmp.blocks)
+                printf("memory block%d    ", block.id);
+            printf("\n");
             threads[tmp.id] = tmp;
         }
     }
@@ -143,7 +153,7 @@ public:
     // 内存回收    将这个进程从threads的map中去掉 并把这些空闲的块给腾出来
     void deleteBlock(int threadID)
     {
-        Thread thread = threads[threadID];
+        File thread = threads[threadID];
         threads.erase(threadID);
         for (auto&page :thread.page_table)
         {
@@ -156,7 +166,7 @@ public:
     }
     void acessPage(int thread_id, int page_num)  //访问某个进程的某个页表 需要用到页面置换算法
     {
-        Thread thread = threads[thread_id];
+        File thread = threads[thread_id];
         if(thread.page_table[page_num].in_memory)
         {
             LRUblocks[thread.page_table[page_num].memory_block_id].tim = get_current_time();
@@ -198,3 +208,5 @@ public:
         return (int)time(NULL);
     }
 };
+int MemoryManager::threadsID = 1;
+
