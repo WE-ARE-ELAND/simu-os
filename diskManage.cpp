@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <vector>
 #include "DiskManager.h"
 
@@ -192,15 +193,14 @@ string DiskManager::readBlock(short block_num)
  * todo 修改成组连接法的数据结构
  * @param num_block 磁盘块块号
  */
-void DiskManager::freeBlock(short num_block)
+int DiskManager::freeBlock(short num_block)
 {
     // 1. 删除数据
     MyDisk[num_block].data = "########################################";
     // todo 2. 修改成组连接法的数据结构
     if (fatList[num_block] == -2)
     {
-        cout << "磁盘块已经空闲" << endl;
-        return;
+        return -1;
     }
     int k = 0;
     while (freeBlocks[k][0] == 100)
@@ -220,6 +220,7 @@ void DiskManager::freeBlock(short num_block)
     {
         FreeSwapBlockNum++;
     }
+    return 1;
 }
 
 /***************************************************************/

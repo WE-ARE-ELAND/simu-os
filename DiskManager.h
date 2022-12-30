@@ -1,5 +1,10 @@
 #pragma once
-#include <bits/stdc++.h>
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+#include <algorithm>
+#include <string>
+using namespace std;
 
 const int DISK_SIZE = 40 * 1024; // 磁盘大小为 40KB
 const int BLOCK_SIZE = 40;       // 每个磁盘块的大小为 40B，块内寻址需要6bit
@@ -23,8 +28,8 @@ class DiskManager
 {
 public:
     DiskBlock MyDisk[1024];                             // 磁盘，有1024个块
-    std::vector<short> fatList;                         // 文件分配表，默认为-2空闲
-    std::map<std::string, short> fileNameToNumOfBlock;    // 文件名与FAT表的映射
+    vector<short> fatList;                         // 文件分配表，默认为-2空闲
+    unordered_map<string, short> fileNameToNumOfBlock;   // 文件名与FAT表的映射
     short freeBlocks[10][101];                                // 空闲块组10组，每组最多100个空闲块，第一位存空闲块数，第二位存上一组组号
     int FreeDataBlockNum;                               // 空闲数据区的块数
     int FreeSwapBlockNum;                               // 空闲交换区的块数
@@ -39,15 +44,15 @@ public:
     void initFreeBlocks();
     // 最微操作
     short allocateBlock();
-    void writeBlock(short num_block, std::string data);
+    void writeBlock(short num_block, string data);
     std::string readBlock(short block_num);
-    void freeBlock(short num_block);
+    int freeBlock(short num_block);
     // 外部函数
-    int AllocateBlocks(std::string fileName, int size, std::string data);
-    void DeallocateBlocks(std::string fileName);
-    std::string ReadFileDataFromDisk(std::string fileName);
-    void readSwapBlock(short blockNum, std::string &buffer);
-    void writeSwapBlock(short blockNum, std::string buffer);
+    int AllocateBlocks(string fileName, int size, string data);
+    void DeallocateBlocks(string fileName);
+    string ReadFileDataFromDisk(string fileName);
+    void readSwapBlock(short blockNum, string &buffer);
+    void writeSwapBlock(short blockNum, string buffer);
     // 输出函数
     void dumpFile(); // 将磁盘数据写入物理文件
     void PrintMyDisk(); // 打印磁盘数据
