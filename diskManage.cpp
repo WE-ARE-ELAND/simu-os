@@ -1,7 +1,4 @@
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <vector>
+
 #include "DiskManager.h"
 
 using namespace std;
@@ -19,7 +16,7 @@ DiskManager::DiskManager()
 
 /**
  * 初始化数据结构
-*/
+ */
 void DiskManager::init()
 {
     // 初始化磁盘
@@ -31,7 +28,7 @@ void DiskManager::init()
 }
 /**
  * 初始化磁盘数据
-*/
+ */
 void DiskManager::initDisk()
 {
     for (int i = 0; i < NUM_BLOCKS; i++)
@@ -43,7 +40,7 @@ void DiskManager::initDisk()
 }
 /**
  * 初始化fat表
-*/
+ */
 void DiskManager::initFat()
 {
     for (int i = 0; i < 1024; ++i)
@@ -53,7 +50,7 @@ void DiskManager::initFat()
 }
 /**
  * 初始化空闲盘块
-*/
+ */
 void DiskManager::initFreeBlocks()
 {
     // 将空闲盘块写入freeBlocks
@@ -241,7 +238,7 @@ int DiskManager::AllocateBlocks(string fileName, int size, string data)
     }
     // 2. 分配相应大小的磁盘块
     short num_block, tmp_num_block; // 动态分配的块号, 上一个分配的磁盘块
-    int index = 0;                            // 索引号；
+    int index = 0;                  // 索引号；
     while (size--)
     {
         // 2.1 分配磁盘块
@@ -369,7 +366,7 @@ void DiskManager::dumpFile()
 
 /**
  * 打印空闲盘块状态
-*/
+ */
 void DiskManager::printFreeBlocks()
 {
     for (int i = 0; i < freeBlocks[0][0] + 2; ++i)
@@ -390,12 +387,12 @@ void DiskManager::printFreeBlocks()
 /**
  * 测试代码
  */
-int main()
-{
-    // DiskManager DIM = getInstance();
-    short num_block = DiskManager::getInstance()->allocateBlock();
-    DiskManager::getInstance()->writeBlock(num_block, "hello world");
-    cout << DiskManager::getInstance()->readBlock(num_block);
-    cout << DiskManager::getInstance()->fatList[num_block];
-    return 0;
-}
+// int main()
+// {
+//     // DiskManager DIM = getInstance();
+//     short num_block = DiskManager::getInstance()->allocateBlock();
+//     DiskManager::getInstance()->writeBlock(num_block, "hello world");
+//     cout << DiskManager::getInstance()->readBlock(num_block);
+//     cout << DiskManager::getInstance()->fatList[num_block];
+//     return 0;
+// }

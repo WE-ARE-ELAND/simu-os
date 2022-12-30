@@ -92,6 +92,9 @@ int main()
             cout << "请输入要读取的磁盘块号：" << endl;
             short num_block;
             cin >> num_block;
+            string data;
+            cout << "请输入要写入的文件数据：" << endl;
+            cin >> data;
             DIM.readSwapBlock(num_block, data);
             cout << data;
             break;
