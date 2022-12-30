@@ -18,6 +18,7 @@ public:
     // DiskManager diskManager;
     // MemoryManager memoryManager;
     vector<std::thread> threads;
+    mutex input_mutex;
     //"1.mkdir 2.rmdir 3.cd 4.ls 5.rm 6.touch 7.tree 8.readFile 9.writeFile 10.rename 11.exit\n"
     unordered_map<string, int> branch_table = {
         {"mkdir", 1},
@@ -30,7 +31,7 @@ public:
         {"readFile", 8},
         {"writeFile", 9},
         {"rename", 10},
-        {"exit", 11},
+        {"quit", 11},
         {"default", 12},
         {"refresh", 13}};
     // 函数声明
@@ -38,7 +39,7 @@ public:
     int initialize();
     void refresh();
     void showMenu();
-    void data_generation_thread(DirectoryManage::File &newFile);
+    void data_generation_thread(string newFile);
     void delete_data_thread(string name);
     void execute_thread();
     void visualize_memory();
