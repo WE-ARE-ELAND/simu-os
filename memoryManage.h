@@ -76,7 +76,6 @@ public:
         for(int i=0;i<200;i++)
             disks[i]={0,0};
     }
-
     int findLRUblock()  //无空闲的内存块需要置换 找最久没有使用过的
     {
         int maxn=INF,choice_id=-1;
@@ -89,7 +88,6 @@ public:
         cout<<maxn<<endl;
         return choice_id;
     }
-
     void showCurrentBlocks(File& f)
     {
         map<int,string> mp;
@@ -185,20 +183,22 @@ public:
         }
         return 0;
     }
-
     // 内存回收    将这个进程从threads的map中去掉 并把这些空闲的块给腾出来
     void deleteBlock(int threadID)
     {
         File thread = threads[threadID];
         threads.erase(threadID);
+        printf("\nThe memory we need to delete is as follows:\n");
         for (auto&page :thread.page_table)
         {
             if(page.second.in_memory)         //在内存中就释放
             {
+                printf("%d    ",page.second.memory_block_id);
                 blocks.push_back(page.second.memory_block_id);
                 disks[page.second.disk_id].first = 0;
             }
         }
+        cout<<endl;
     }
     void acessPage(int thread_id, int page_num)  //访问某个进程的某个页表 需要用到页面置换算法
     {
