@@ -35,7 +35,7 @@ struct MemoryBlock
 struct PageTableEntry
 {
     int memory_block_id;  // 放在哪个内存块
-    int disk_id;          // 调出时候的磁盘号 默认为0     可提供900-1023
+    int disk_id;          // 调出时候的磁盘号    可提供900-1023
     int thread_id;        // 属于哪个进程
     bool in_memory;       // 表示页面是否在内存中（如果不在内存中，需要先调入内存）
     int last_access_time; // 最后一次被访问的时间（用于实现LRU算法）

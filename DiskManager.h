@@ -54,6 +54,7 @@ public:
     string ReadFileDataFromDisk(string fileName);
     void readSwapBlock(short blockNum, string &buffer);
     void writeSwapBlock(short blockNum, string buffer);
+    vector<int> getAllBlocks(string fileName);
     // 输出函数
     void dumpFile();        // 将磁盘数据写入物理文件
     void PrintMyDisk();     // 打印磁盘数据
