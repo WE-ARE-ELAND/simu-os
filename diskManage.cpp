@@ -119,7 +119,6 @@ short DiskManager::allocateBlock()
     {
         freeNum = freeBlocks[0][0];
         allocNum = freeBlocks[0][freeNum + 1];
-        fatList[allocNum] = -1;
         freeBlocks[0][0]--;
         if (allocNum < 900)
         {
@@ -132,17 +131,17 @@ short DiskManager::allocateBlock()
     }
     else
     {
+        int nextGroup = freeBlocks[0][1];
         // 不是链尾，还有其它空闲块组
-        if (freeBlocks[0][1] != 0)
+        if (nextGroup != 0)
         {
             // 当前组已经分配完，下一组拷贝到当前组
-            for (int j = 0; j < freeBlocks[freeBlocks[0][1]][0]; j++)
+            for (int j = 0; j < freeBlocks[0][0] + 2; j++)
             {
-                freeBlocks[0][j] = freeBlocks[freeBlocks[0][1]][j];
+                freeBlocks[0][j] = freeBlocks[nextGroup][j];
             }
             freeNum = freeBlocks[0][0];
             allocNum = freeBlocks[0][freeNum + 1];
-            fatList[allocNum] = -1;
             freeBlocks[0][0]--;
             if (allocNum < 900)
             {
@@ -380,20 +379,7 @@ void DiskManager::printFreeBlocks()
         {
             cout << endl;
         }
-        cout << freeBlocks[0][i] << " ";
+        cout << freeBlocks[0][i] << " \t";
     }
     cout << endl;
 }
-
-/**
- * 测试代码
- */
-// int main()
-// {
-//     // DiskManager DIM = getInstance();
-//     short num_block = DiskManager::getInstance()->allocateBlock();
-//     DiskManager::getInstance()->writeBlock(num_block, "hello world");
-//     cout << DiskManager::getInstance()->readBlock(num_block);
-//     cout << DiskManager::getInstance()->fatList[num_block];
-//     return 0;
-// }
