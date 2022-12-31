@@ -10,6 +10,7 @@ MemoryManager::MemoryManager()
     {
         LRUblocks[i] = {0, 0, -1, -1};
         blocks.push_back(i);
+        fakeVisit[i] = 0;
     }
     for (int i = 0; i < 200; i++)
         disks[i] = {0, 0};
@@ -20,55 +21,66 @@ int MemoryManager::findLRUblock()
     int maxn = INF, choice_id = -1;
     for (int i = 0; i < NUM_MEMORY_BLOCKS; i++)
     {
-        // cout<<i<<' '<<LRUblocks[i].tim<<endl;
         if (LRUblocks[i].tim < maxn)
             maxn = LRUblocks[i].tim, choice_id = i;
     }
-    cout << maxn << endl;
     return choice_id;
 }
 
 void MemoryManager::showCurrentBlocks(File &f)
 {
-    map<int, string> mp;
+    vector<int> v;
     for (auto &block : f.blocks)
+        v.push_back(block.id),fakeVisit[block.id]=1;
+    int blockID = 0;
+    while(v.size()<8 && blockID < blocks.size())
     {
-        // cout<<block.id<<' '<<block.data<<endl;
-        mp[block.id] = block.data;
+        if(fakeVisit[blocks[blockID]] == 0)
+        {
+            v.push_back(blocks[blockID]);
+            fakeVisit[blocks[blockID]] = 1;
+        }
+        blockID ++;
     }
+    set<int> s;
+    for (auto& it:v)
+        s.insert(it);
     for (int i = 0; i < NUM_MEMORY_BLOCKS; i++)
     {
         if (i % 8 == 0)
             printf("\n");
-        if (mp.count(i))
-            cout << mp[i];
+        if (s.count(i))
+            cout << "*";
         else
             printf("#");
     }
 }
 
+
 void MemoryManager::allocateThreads(string threadName, string content)
 {
-    int needBlock = content.size();
+    int needBlock = (content.size()+39)/40;
     File tmp;
     tmp.id = threadsID++, tmp.name = threadName;
+    fileNameIdConvert[threadName] = tmp.id;
     if (needBlock <= blocks.size()) // 空闲块够分配
     {
         printf("\nCurrent availavle memory blocks is enough to allocate\n");
         int j = blocks.size() - 1;
         for (int i = 0; i < needBlock; i++)
         {
-            MemoryBlock newBlock = {blocks[j], false, content[i]}; // 找到空闲内存
+            string nowContent;
+            if(i==needBlock-1)
+                nowContent = content.substr(i*40,40);
+            else 
+                nowContent = content.substr(i*40);
+            MemoryBlock newBlock = {blocks[j], false, nowContent}; // 找到空闲内存
             tmp.blocks.push_back(newBlock);                        // 填入相关信息
             tmp.page_table[i] = PageTableEntry{blocks[j], 0, tmp.id, true, get_current_time()};
             LRUblocks[blocks[j]] = {1, get_current_time(), tmp.id, i}; // 记录最后一次出现的时间和是否空闲
             blocks.pop_back(), j--;                                    // 弹出记录的空闲内存
         }
         threads[tmp.id] = tmp;
-        printf("We allovate memory blocks as follows:\n");
-        for (auto &block : tmp.blocks)
-            printf("%d    ", block.id);
-        printf("\n");
         showCurrentBlocks(tmp);
     }
     else // 不够分配
@@ -82,7 +94,8 @@ void MemoryManager::allocateThreads(string threadName, string content)
         int j = blocks.size() - 1, nowsize = blocks.size();
         for (int i = 0; i < nowsize; i++)
         {
-            MemoryBlock newBlock = {blocks[j], false, content[i]}; // 找到空闲内存
+            string nowContent = content.substr(i*40);
+            MemoryBlock newBlock = {blocks[j], false, nowContent}; // 找到空闲内存
             tmp.blocks.push_back(newBlock);                        // 填入相关信息
             tmp.page_table[i] = PageTableEntry{blocks[j], 0, tmp.id, true, get_current_time()};
             LRUblocks[blocks[j]] = {1, get_current_time(), tmp.id, i}; // 记录最后一次出现的时间和是否空闲
@@ -93,21 +106,22 @@ void MemoryManager::allocateThreads(string threadName, string content)
         {
             int findBlock = findLRUblock(); // 需要把这个块置换出去
             LruBlock lrublock = LRUblocks[findBlock];
-            printf("%d     ", findBlock);
+            printf("%d  ", findBlock);
 
             threads[lrublock.thread_id].page_table[lrublock.page_id].in_memory = 0;
             threads[lrublock.thread_id].page_table[lrublock.page_id].disk_id = findDiskBlock(threads[lrublock.thread_id].page_table[lrublock.page_id].thread_id, threads[lrublock.thread_id].page_table[lrublock.page_id].memory_block_id);
             LRUblocks[findBlock].tim = get_current_time();
 
             int avaBlock = threads[lrublock.thread_id].page_table[lrublock.page_id].memory_block_id;
-            MemoryBlock newBlock = {avaBlock, false, content[i]};
+            string nowContent;
+            if(i==needBlock-1)
+                nowContent = content.substr(i*40,40);
+            else 
+                nowContent = content.substr(i*40);
+            MemoryBlock newBlock = {avaBlock, false, nowContent};
             tmp.blocks.push_back(newBlock);
             tmp.page_table[i] = PageTableEntry{avaBlock, 0, tmp.id, true, get_current_time()};
         }
-        printf("\nFinally the allovate memory blocks is as follows:\n");
-        for (auto &block : tmp.blocks)
-            printf("%d    ", block.id);
-        printf("\n");
         threads[tmp.id] = tmp;
         showCurrentBlocks(tmp);
     }
@@ -126,22 +140,35 @@ int MemoryManager::findDiskBlock(int thread_id, int pageid)
     return 0;
 }
 
-void MemoryManager::deleteBlock(int threadID)
+void MemoryManager::deleteBlock(string threadName)
 {
+    int threadID = fileNameIdConvert[threadName];
     File thread = threads[threadID];
     threads.erase(threadID);
     printf("\nThe memory we need to delete is as follows:\n");
+    set <int> s;
     for (auto &page : thread.page_table)
     {
         if (page.second.in_memory) // 在内存中就释放
         {
-            printf("%d    ", page.second.memory_block_id);
+            s.insert(page.second.memory_block_id);
+            fakeVisit[page.second.memory_block_id] = 0;
+            // printf("%d ", page.second.memory_block_id);
             blocks.push_back(page.second.memory_block_id);
             disks[page.second.disk_id].first = 0;
         }
     }
-    cout << endl;
+    for (int i = 0; i < NUM_MEMORY_BLOCKS; i++)
+    {
+        if (i % 8 == 0)
+            printf("\n");
+        if (s.count(i))
+            cout << "*";
+        else
+            printf("#");
+    }
 }
+
 
 void MemoryManager::acessPage(int thread_id, int page_num)
 {
