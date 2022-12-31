@@ -1,6 +1,6 @@
 #include <thread>
 #include <chrono>
-//  #include "memoryManage.h"
+#include "memoryManage.h"
 #include "DirectoryManage.h"
 #include "DiskManager.h"
 #include <unordered_map>
@@ -16,7 +16,7 @@ class ThreadManager
 public:
     DirectoryManage DIR;
     DiskManager DIM;
-    // MemoryManager memoryManager;
+    MemoryManager memoryManager;
     vector<std::thread> threads;
     mutex input_mutex;
     //"1.mkdir 2.rmdir 3.cd 4.ls 5.rm 6.touch 7.tree 8.readFile 9.writeFile 10.rename 11.exit\n"
