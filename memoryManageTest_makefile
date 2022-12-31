@@ -1,0 +1,9 @@
+memoryManage_test:memoryManage_test.o memoryManage.o
+	g++ *.o -o memoryManage_test
+	rm *.o
+	./memoryManage_test
+	rm memoryManage_test
+memoryManage.o:memoryManage.h
+	g++ -c -std=c++11 memoryManage.cpp -o memoryManage.o
+memoryManage_test.o:memoryManage_test.cpp
+	g++ -c -std=c++11 memoryManage_test.cpp -o memoryManage_test.o

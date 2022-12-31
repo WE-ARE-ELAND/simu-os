@@ -6,6 +6,7 @@
 `make -f threadManagetest_makefile`
 `make -f diskManageTest_makefile`
 `make -f DirecotryManageTest_makefile`
+`make -f memoryManageTest_makefile`
 即可运行相应的代码，如果没有make程序，请[自行安装](https://stackoverflow.com/questions/2532234/how-to-run-a-makefile-in-windows)。
 
 
