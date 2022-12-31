@@ -313,7 +313,6 @@ void DiskManager::readSwapBlock(short blockNum, string &buffer)
 /**
  * 读取文件数据
  * @param fileName 文件名
- * @param size 文件所占的磁盘块数量
  * @return 文件数据
  */
 string DiskManager::ReadFileDataFromDisk(string fileName)
@@ -382,4 +381,23 @@ void DiskManager::printFreeBlocks()
         cout << freeBlocks[0][i] << " \t";
     }
     cout << endl;
+}
+
+/**
+ * 得到文件占用的磁盘块
+ * @param fileName 文件名
+ * @return 文件数据
+ */
+vector<int> DiskManager::getAllBlocks(string fileName)
+{
+    vector<int> blocks;
+    int start_num_block = fileNameToNumOfBlock[fileName];
+    int num_block = start_num_block;
+    while (fatList[num_block] != -1)
+    {
+        blocks.push_back(num_block);
+        num_block = fatList[num_block];
+    }
+    blocks.push_back(num_block);
+    return blocks;
 }
