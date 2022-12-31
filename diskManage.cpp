@@ -229,7 +229,7 @@ int DiskManager::freeBlock(short num_block)
  * @param data 写入的数据
  * @return 空间是否充足
  */
-short AllocateBlocks(string fileName, int size, string data)
+int DiskManager::AllocateBlocks(string fileName, int size, string data)
 {
     // 1. 空闲磁盘块不足以存储相应大小的文件
     if (size > FreeDataBlockNum)
@@ -242,7 +242,7 @@ short AllocateBlocks(string fileName, int size, string data)
     while (size--)
     {
         // 2.1 分配磁盘块
-        num_block = allocate();
+        num_block = allocateBlock();
         // 2.2 写入数据
         if (index < data.size())
         {
@@ -287,12 +287,12 @@ void DiskManager::DeallocateBlocks(string fileName)
         int next_num_block = fatList[num_block];
         {
             // 2. 更新空闲盘块
-            recycling(num_block);
+            freeBlock(num_block);
         }
         fatList[num_block] = -2;
         num_block = next_num_block;
     }
-    recycling(num_block);
+    freeBlock(num_block);
     fatList[num_block] = -2;
     fileNameToNumOfBlock.erase(fileName);
 }
