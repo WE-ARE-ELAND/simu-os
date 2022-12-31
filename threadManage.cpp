@@ -38,13 +38,12 @@ void ThreadManager::delete_data_thread(string name)
         sleep_time += 1000;
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
         cout << "数据删除进程：外存回收成功！" << endl;
-        // TODO：展示哪些磁盘块被释放
-        // cout << "被回收的磁盘块号为：";
-        // for (auto i : DIM.getAllBlocks(name))
-        // {
-        //     cout << i << " ";
-        // }
-        // cout << endl;
+        cout << "被回收的磁盘块号为：";
+        for (auto i : DIM.getAllBlocks(name))
+        {
+            cout << i << " ";
+        }
+        cout << endl;
         DIM.DeallocateBlocks(name); /*回收外存块*/
     }
     else
@@ -58,11 +57,12 @@ void ThreadManager::execute_thread(string name)
     DirectoryManage::File *newFile = DIR.ReadFile(name);
     if (newFile) // 文件存在，且有权限
     {
+        allocateThreads(name, newFile->context);
         // 调用内存管理的空闲空间管理功能，申请8块内存空间
     }
     else
     {
-        cout << "执行进程：文件不存在或权限不足！"
+        cout << "执行进程：文件不存在或权限不足！" << endl;
     }
 }
 
