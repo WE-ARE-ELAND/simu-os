@@ -1,8 +1,8 @@
 diskManageTest:diskManageTest.o diskManage.o
 	g++ *.o -o diskManageTest
-	./diskManageTest
-	rm *.o
-	rm ./diskManageTest
+	.\diskManageTest
+	del *.o
+	del .\diskManageTest
 diskManageTest.o:diskManageTest.cpp
 	g++ -c -std=c++11 diskManageTest.cpp -o diskManageTest.o
 diskManage.o:diskManage.cpp
