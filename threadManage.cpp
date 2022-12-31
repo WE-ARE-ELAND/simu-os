@@ -57,9 +57,10 @@ void ThreadManager::execute_thread(string name)
     DirectoryManage::File *file = DIR.ReadFile(name);
     if (file) // 文件存在，且有权限
     {
-        // allocateThreads(name, newFile->context);
-        // TODO:调用内存管理的空闲空间管理功能，申请8块内存空间
         cout << "执行线程：将文件调入内存中..." << endl;
+        memoryManager.allocateThreads(name, file->context);
+        // TODO:调用内存管理的空闲空间管理功能，申请8块内存空间
+
         cout << "打开成功！" << endl;
         // cout << file->context << endl;
         // input_mutex.lock();
