@@ -614,7 +614,7 @@ DirectoryManage::File* DirectoryManage::ReadFile(string path) {
 					if (t->file.name == Path.front()) {
 						//权限判断
 						if (t->file.canRead != 1 && t->file.canRead != user.userRight) {
-							cout << "用户权限不足，无法查看该文件内容！\n";
+							// cout << "用户权限不足，无法查看该文件内容！\n";
 							return NULL;
 						}
 						//输出文件内容
@@ -642,7 +642,7 @@ DirectoryManage::File* DirectoryManage::ReadFile(string path) {
 			}
 		}
 	}
-	cout << "路径有误，或不存在该文件！\n";
+	// cout << "路径有误，或不存在该文件！\n";
 	return NULL;
 }
 

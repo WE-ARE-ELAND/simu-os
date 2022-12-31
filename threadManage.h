@@ -28,8 +28,8 @@ public:
         {"rm", 5},
         {"touch", 6},
         {"tree", 7},
-        {"readFile", 8},
-        {"writeFile", 9},
+        {"read", 8},
+        {"write", 9},
         {"rename", 10},
         {"quit", 11},
         {"default", 12},
@@ -41,7 +41,7 @@ public:
     void showMenu();
     void data_generation_thread(string newFile);
     void delete_data_thread(string name);
-    void execute_thread();
+    void execute_thread(string name);
     void visualize_memory();
     void joinAllThreads();
     int generateNumber(int min, int max);
