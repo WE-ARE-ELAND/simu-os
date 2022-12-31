@@ -16,10 +16,14 @@ void ThreadManager::data_generation_thread(string fileName)
         int first_block = DIM.fileNameToNumOfBlock[newFile->name]; // 获取文件名对应的第一个盘块号
         cout << "数据生成进程：文件磁盘块分配成功，起始的磁盘号为：" << first_block << endl;
         cout << "数据生成进程：创建目录项中..." << endl;
+        sleep_time += 1000;
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
         DIR.CreateDirEntry(*newFile, first_block);
+        cout << "数据生成进程：目录项创建成功！" << endl;
     }
     else
     {
+        cout << "数据生成进程：磁盘空间不足，磁盘块分配失败！" << endl;
     }
 }
 
@@ -33,11 +37,32 @@ void ThreadManager::delete_data_thread(string name)
         cout << "数据删除进程：该文件在目录中删除，正在回收外存..." << endl;
         sleep_time += 1000;
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
-        /*TODO：回收外存块*/
+        cout << "数据删除进程：外存回收成功！" << endl;
+        // TODO：展示哪些磁盘块被释放
+        // cout << "被回收的磁盘块号为：";
+        // for (auto i : DIM.getAllBlocks(name))
+        // {
+        //     cout << i << " ";
+        // }
+        // cout << endl;
+        DIM.DeallocateBlocks(name); /*回收外存块*/
     }
     else
     {
         cout << "数据删除进程：不存在该文件！" << endl;
+    }
+}
+
+void ThreadManager::execute_thread(string name)
+{
+    DirectoryManage::File *newFile = DIR.ReadFile(name);
+    if (newFile) // 文件存在，且有权限
+    {
+        // 调用内存管理的空闲空间管理功能，申请8块内存空间
+    }
+    else
+    {
+        cout << "执行进程：文件不存在或权限不足！"
     }
 }
 
@@ -83,7 +108,8 @@ void ThreadManager::showMenu()
     DIR.login();
     string sel;
     cout << "请输入你要实现的功能(输入命令）：\n"
-         << "mkdir rmdir cd ls rm touch tree readFile writeFile rename refresh quit\n";
+         << "mkdir rmdir cd ls rm touch tree read write rename refresh quit\n"
+         << "disk(查看磁盘信息)" << endl;
     while (true)
     {
         input_mutex.lock();
@@ -147,19 +173,19 @@ void ThreadManager::showMenu()
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
             break;
         }
-        case 7:
+        case 7: // tree
         {
             DIR.tree(DIR.workDir, -1);
             break;
         }
-        case 8:
+        case 8: // readFile
         {
-            string path;
-            cout << "请输入文件名所在路径：";
-            cin >> path;
+            string name;
+            cout << "请输入当前目录下文件名：";
+            cin >> name;
             cout << "执行线程：处理中..." << endl;
-            // threads.emplace_back(&ThreadManager::execute_thread,this,path);
-            DIR.ReadFile(path);
+            threads.emplace_back(&ThreadManager::execute_thread, this, name);
+            // DIR.ReadFile(path);
             break;
         }
         case 9:
