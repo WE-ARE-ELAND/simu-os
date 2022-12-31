@@ -1,25 +1,31 @@
 #include "threadManage.h"
 void ThreadManager::data_generation_thread(string fileName)
 {
-    // 调用磁盘分配的函数,若成功返回1，失败返回-1
-    // int status = AllocateBlocks(newFile.name, newFile.size, newFile.context);
-    // if (status == 1)
-    // {
-    //     // 成功分配内存块
-    //     int first_block = diskManager.fileNameToNumOfBlock[newFile->name]; // 获取文件名对应的第一个盘块号
-    // }
-    // else
-    // {
-    // }
+
     input_mutex.lock();
-    DirectoryManage::File *file = DIR.CreateFile(fileName);
+    DirectoryManage::File *newFile = DIR.CreateFile(fileName);
     input_mutex.unlock();
-    DIR.CreateDirEntry(*file, 60); // 等待磁盘管理的分配盘块的函数
+    cout << "后台处理中，您可继续执行其他命令..." << endl;
+    // 调用磁盘分配的函数,若成功返回1，失败返回-1
+    int status = DIM.AllocateBlocks(newFile->name, newFile->size / BLOCK_SIZE + 1, newFile->context); // file->size 表示字符数，需要除以BLOCK_SIZE(40)+1才是所需盘块
+    if (status == 1)
+    {
+        int sleep_time = this->generateNumber(2000, 5000); // 2-5秒的时延，体现多线程机制
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
+        // 成功分配内存块
+        int first_block = DIM.fileNameToNumOfBlock[newFile->name]; // 获取文件名对应的第一个盘块号
+        cout << "数据生成进程：文件磁盘块分配成功，起始的磁盘号为：" << first_block << endl;
+        cout << "数据生成进程：创建目录项中..." << endl;
+        DIR.CreateDirEntry(*newFile, first_block);
+    }
+    else
+    {
+    }
 }
 
 void ThreadManager::delete_data_thread(string name)
 {
-    int sleep_time = this->generateNumber(2000, 5000); // 1-5秒的时延，体现多线程机制
+    int sleep_time = this->generateNumber(2000, 5000); // 2-5秒的时延，体现多线程机制
     std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
     bool isDelFormDir = DIR.DeleteFile(name); // 目录中没有这个文件返回false，有这个文件返回并删除返回true
     if (isDelFormDir)
