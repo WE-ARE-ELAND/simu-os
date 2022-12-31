@@ -229,10 +229,10 @@ int DiskManager::freeBlock(short num_block)
  * @param data 写入的数据
  * @return 空间是否充足
  */
-int DiskManager::AllocateBlocks(string fileName, int size, string data)
+short AllocateBlocks(string fileName, int size, string data)
 {
     // 1. 空闲磁盘块不足以存储相应大小的文件
-    if (size > FreeSwapBlockNum)
+    if (size > FreeDataBlockNum)
     {
         return -1;
     }
@@ -242,19 +242,20 @@ int DiskManager::AllocateBlocks(string fileName, int size, string data)
     while (size--)
     {
         // 2.1 分配磁盘块
-        num_block = allocateBlock();
+        num_block = allocate();
+        // 2.2 写入数据
         if (index < data.size())
         {
-            if (data.size() < 16)
+            if (data.size() - index < 40)
             {
-                writeBlock(num_block, data.substr(index, data.size()));
+                writeBlock(num_block, data.substr(index, data.size() - index));
             }
             else
             {
-                writeBlock(num_block, data.substr(index, 16));
+                writeBlock(num_block, data.substr(index, 40));
             }
         }
-        // 2.2 将分配的盘块号写入FAT表
+        // 2.3 将分配的盘块号写入FAT表
         {
             if (index == 0)
             {
@@ -266,7 +267,7 @@ int DiskManager::AllocateBlocks(string fileName, int size, string data)
             }
             tmp_num_block = num_block;
         }
-        index += 16;
+        index += 40;
     }
     fatList[num_block] = -1;
     return 1;
@@ -278,21 +279,21 @@ int DiskManager::AllocateBlocks(string fileName, int size, string data)
  */
 void DiskManager::DeallocateBlocks(string fileName)
 {
-    int start_num_block = fileNameToNumOfBlock[fileName];
+    short start_num_block = fileNameToNumOfBlock[fileName];
     // 1. 更新FAT表
-    int num_block = start_num_block;
+    short num_block = start_num_block;
     while (fatList[num_block] != -1)
     {
         int next_num_block = fatList[num_block];
-        fatList[num_block] = -2;
         {
             // 2. 更新空闲盘块
-            freeBlock(num_block);
+            recycling(num_block);
         }
+        fatList[num_block] = -2;
         num_block = next_num_block;
     }
+    recycling(num_block);
     fatList[num_block] = -2;
-    freeBlock(num_block);
     fileNameToNumOfBlock.erase(fileName);
 }
 
