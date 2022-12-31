@@ -3,7 +3,7 @@
 int main()
 {
     DiskManager DIM;
-    
+
     cout << "1. 分配磁盘块 2. 回收磁盘块\n 3. 写入数据 4. 读取数据\n 5. 创建文件 6. 删除文件\n 7. 写入交换区 8. 读取交换区\n 9. 查看空闲块 10. 退出" << endl;
     while (true)
     {
@@ -107,7 +107,23 @@ int main()
         }
         case 10:
         {
-            exit(0);
+            string fileName;
+            cout << "请输入要查询的文件名：" << endl;
+            cin >> fileName;
+            cout << DIM.ReadFileDataFromDisk(fileName) << endl;
+            break;
+        }
+        case 11:
+        {
+            string fileName;
+            cout << "请输入要查询的文件名：" << endl;
+            cin >> fileName;
+            for (int i : DIM.getAllBlocks(fileName))
+            {
+                cout << i << " ";
+            }
+            cout << endl;
+            break;
         }
         default:
             exit(0);
