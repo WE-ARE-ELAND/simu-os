@@ -2,7 +2,7 @@
 #include <chrono>
 //  #include "memoryManage.h"
 #include "DirectoryManage.h"
-// #include "DiskManager.h"
+#include "DiskManager.h"
 #include <unordered_map>
 
 using namespace std;
@@ -15,7 +15,7 @@ class ThreadManager
 {
 public:
     DirectoryManage DIR;
-    // DiskManager diskManager;
+    DiskManager DIM;
     // MemoryManager memoryManager;
     vector<std::thread> threads;
     mutex input_mutex;
