@@ -31,7 +31,7 @@ void DiskManager::init()
  */
 void DiskManager::initDisk()
 {
-    for (int i = 0; i < NUM_BLOCKS; i++)
+    for (int i = 0; i < 1024; i++)
     {
         MyDisk[i].BlockNum = i;
         // 前52个磁盘块用于存储FAT表
