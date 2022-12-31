@@ -29,9 +29,9 @@ class DiskManager
 {
 public:
     DiskBlock MyDisk[1024];                            // 磁盘，有1024个块
-    short fatList[1024];                             // 文件分配表，默认为-2空闲
+    short fatList[1024];                               // 文件分配表，默认为-2空闲
     unordered_map<string, short> fileNameToNumOfBlock; // 文件名与FAT表的映射
-    short freeBlocks[10][101];                         // 空闲块组10组，每组最多100个空闲块，第一位存空闲块数，第二位存上一组组号
+    short freeBlocks[10][102];                         // 空闲块组10组，每组最多100个空闲块，第一位存空闲块数，第二位存上一组组号
     int FreeDataBlockNum;                              // 空闲数据区的块数
     int FreeSwapBlockNum;                              // 空闲交换区的块数
 
