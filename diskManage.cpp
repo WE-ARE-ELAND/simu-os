@@ -386,7 +386,7 @@ void DiskManager::printFreeBlocks()
 /**
  * 得到文件占用的磁盘块
  * @param fileName 文件名
- * @return 文件数据
+ * @return 文件所占的磁盘块
  */
 vector<int> DiskManager::getAllBlocks(string fileName)
 {
