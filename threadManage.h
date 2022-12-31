@@ -28,12 +28,14 @@ public:
         {"rm", 5},
         {"touch", 6},
         {"tree", 7},
-        {"read", 8},
+        {"readfile", 8},
+        {"readDisk", 15},
         {"write", 9},
         {"rename", 10},
         {"quit", 11},
         {"default", 12},
-        {"refresh", 13}};
+        {"refresh", 13},
+        {"disk", 14}};
     // 函数声明
     ThreadManager(); // 构造函数中完成初始化
     int initialize();

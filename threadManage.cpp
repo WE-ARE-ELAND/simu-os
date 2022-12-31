@@ -54,11 +54,17 @@ void ThreadManager::delete_data_thread(string name)
 
 void ThreadManager::execute_thread(string name)
 {
-    DirectoryManage::File *newFile = DIR.ReadFile(name);
-    if (newFile) // 文件存在，且有权限
+    DirectoryManage::File *file = DIR.ReadFile(name);
+    if (file) // 文件存在，且有权限
     {
-        allocateThreads(name, newFile->context);
-        // 调用内存管理的空闲空间管理功能，申请8块内存空间
+        // allocateThreads(name, newFile->context);
+        // TODO:调用内存管理的空闲空间管理功能，申请8块内存空间
+        cout << "执行线程：将文件调入内存中..." << endl;
+        cout << "打开成功！" << endl;
+        // cout << file->context << endl;
+        // input_mutex.lock();
+        cout << DIM.ReadFileDataFromDisk(file->name) << endl;
+        // input_mutex.unlock();
     }
     else
     {
@@ -108,7 +114,7 @@ void ThreadManager::showMenu()
     DIR.login();
     string sel;
     cout << "请输入你要实现的功能(输入命令）：\n"
-         << "mkdir rmdir cd ls rm touch tree read write rename refresh quit\n"
+         << "mkdir rmdir cd ls rm touch tree readfile readDisk write rename refresh quit\n"
          << "disk(查看磁盘信息)" << endl;
     while (true)
     {
@@ -186,6 +192,7 @@ void ThreadManager::showMenu()
             cout << "执行线程：处理中..." << endl;
             threads.emplace_back(&ThreadManager::execute_thread, this, name);
             // DIR.ReadFile(path);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             break;
         }
         case 9:
@@ -209,6 +216,21 @@ void ThreadManager::showMenu()
             exit(0);
         case 13:
             break;
+        case 14: // disk
+        {
+            cout << "空闲块信息（成组链接法超级块）：" << endl;
+            DIM.printFreeBlocks();
+            break;
+        }
+        case 15:
+        {
+            cout << "请输入要读取的磁盘块号：" << endl;
+            short num_block;
+            cin >> num_block;
+            string data = DIM.readBlock(num_block);
+            cout << data << endl;
+            break;
+        }
         default:
         {
             cout << "该命令不存在，请重新输入" << endl;

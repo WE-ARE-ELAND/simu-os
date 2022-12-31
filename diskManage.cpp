@@ -322,10 +322,10 @@ string DiskManager::ReadFileDataFromDisk(string fileName)
     int num_block = start_num_block;
     while (fatList[num_block] != -1)
     {
-        data.append(readBlock(num_block));
+        data.append("盘块" + to_string(num_block) + ":" + readBlock(num_block) + "\n");
         num_block = fatList[num_block];
     }
-    data.append(readBlock(num_block));
+    data.append("盘块" + to_string(num_block) + ":" + readBlock(num_block) + "\n");
     return data;
 }
 
@@ -370,9 +370,14 @@ void DiskManager::printFreeBlocks()
 {
     for (int i = 0; i < freeBlocks[0][0] + 2; ++i)
     {
+        if (i == 0)
+            cout << "该组空闲块数：";
+        if (i == 1)
+            cout << "下一组编号：";
         if (i == 2)
         {
-            cout << endl;
+            cout << endl
+                 << "空闲块编号：" << endl;
         }
         if (i > 2 && (i - 2) % 10 == 0)
         {

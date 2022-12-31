@@ -618,7 +618,7 @@ DirectoryManage::File* DirectoryManage::ReadFile(string path) {
 							return NULL;
 						}
 						//输出文件内容
-						cout << t->file.context<<"\n";
+						// cout << t->file.context<<"\n";
 						return &t->file;
 					}
 					t = t->nextFile;
