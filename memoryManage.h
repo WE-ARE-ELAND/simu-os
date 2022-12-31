@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <algorithm>
 #include <string>
+#include <set>
 #include <queue>
 #include <map>
 #include <time.h>
@@ -28,14 +29,14 @@ struct MemoryBlock
 {
     int id;       // 内存块的id 独一无二
     bool is_free; // 是否被使用
-    char data;    // 内存块的数据
+    string data;    // 内存块的数据
 };
 
 // 页表项
 struct PageTableEntry
 {
     int memory_block_id;  // 放在哪个内存块
-    int disk_id;          // 调出时候的磁盘号    可提供900-1023
+    int disk_id;          // 调出时候的磁盘号 默认为0     可提供900-1023
     int thread_id;        // 属于哪个进程
     bool in_memory;       // 表示页面是否在内存中（如果不在内存中，需要先调入内存）
     int last_access_time; // 最后一次被访问的时间（用于实现LRU算法）
@@ -63,6 +64,8 @@ public:
     LruBlock LRUblocks[NUM_MEMORY_BLOCKS + 5]; // 用来记录最后出现的时间和是否空闲
     std::unordered_map<int, File> threads;     // 每个进程编号对应的进程
     pair<int, int> disks[200];                 // 记录磁盘的空闲状态 first是否空闲 0 是空闲
+    map <string,int> fileNameIdConvert;
+    int fakeVisit[NUM_MEMORY_BLOCKS + 5];
 public:
     MemoryManager();
     int findLRUblock(); // 无空闲的内存块需要置换 找最久没有使用过的
@@ -70,10 +73,8 @@ public:
     void allocateThreads(string threadName, string content); // size代表进程的大小 以B为单位  content代表进程的字符串
     int findDiskBlock(int thread_id, int pageid);
     // 内存回收    将这个进程从threads的map中去掉 并把这些空闲的块给腾出来
-    void deleteBlock(int threadID);
+    void deleteBlock(string threadName);
     void acessPage(int thread_id, int page_num); // 访问某个进程的某个页表 需要用到页面置换算法
 
     int get_current_time(); // 获取当前时间 主要是为LRU算法服务
 };
-// int MemoryManager::threadsID = 1;
-// int MemoryManager::startTime = 0;
