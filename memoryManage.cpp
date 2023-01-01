@@ -126,7 +126,14 @@ void MemoryManager::allocateThreads(string threadName, string content)
         showCurrentBlocks(tmp);
     }
 }
-
+void MemoryManager::showPage(string threadName)
+{
+    int fileId=fileNameIdConvert[threadName];
+    printf("*****************************")
+        printf("Page id            block id\n");
+    for (auto&page:threads[fileId].page_table)
+        printf("%d                     %d\n",page.first,page.second.memory_block_id);
+}
 int MemoryManager::findDiskBlock(int thread_id, int pageid)
 {
     for (int i = 0; i <= diskEnd - diskStart; i++)
