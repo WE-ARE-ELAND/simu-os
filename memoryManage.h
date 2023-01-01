@@ -50,6 +50,7 @@ struct File
     std::vector<MemoryBlock> blocks;                    // 进程包含的blocks
     std::unordered_map<int, PageTableEntry> page_table; // 页表： 页号->页表项
 };
+
 struct LruBlock
 {
     int in_memory, tim, thread_id, page_id;
@@ -75,6 +76,6 @@ public:
     // 内存回收    将这个进程从threads的map中去掉 并把这些空闲的块给腾出来
     void deleteBlock(string threadName);
     void acessPage(int thread_id, int page_num); // 访问某个进程的某个页表 需要用到页面置换算法
-
+    void showPage(string threadName);
     int get_current_time(); // 获取当前时间 主要是为LRU算法服务
 };
