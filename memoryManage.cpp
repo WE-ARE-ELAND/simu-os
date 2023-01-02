@@ -129,7 +129,7 @@ void MemoryManager::allocateThreads(string threadName, string content)
 void MemoryManager::showPage(string threadName)
 {
     int fileId=fileNameIdConvert[threadName];
-    printf("*****************************")
+    printf("*****************************");
         printf("Page id            block id\n");
     for (auto&page:threads[fileId].page_table)
         printf("%d                     %d\n",page.first,page.second.memory_block_id);
