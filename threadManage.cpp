@@ -76,9 +76,11 @@ void ThreadManager::execute_thread(string name)
         cout << "执行线程：将文件调入内存中..." << endl;
         int sleep_time = this->generateNumber(2000, 5000); // 2-5秒的时延
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
+        mem_mutex.lock();
         memoryManager.allocateThreads(name, file->context);
         cout << endl;
         memoryManager.showPage(name);
+        mem_mutex.unlock();
         cout << "打开成功！" << endl;
         // 在文件打开表中记录
         opened_file.push_back(name);
