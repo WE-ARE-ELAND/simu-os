@@ -31,19 +31,19 @@ void MemoryManager::showCurrentBlocks(File &f)
 {
     vector<int> v;
     for (auto &block : f.blocks)
-        v.push_back(block.id),fakeVisit[block.id]=1;
+        v.push_back(block.id), fakeVisit[block.id] = 1;
     int blockID = 0;
-    while(v.size()<8 && blockID < blocks.size())
+    while (v.size() < 8 && blockID < blocks.size())
     {
-        if(fakeVisit[blocks[blockID]] == 0)
+        if (fakeVisit[blocks[blockID]] == 0)
         {
             v.push_back(blocks[blockID]);
             fakeVisit[blocks[blockID]] = 1;
         }
-        blockID ++;
+        blockID++;
     }
     set<int> s;
-    for (auto& it:v)
+    for (auto &it : v)
         s.insert(it);
     for (int i = 0; i < NUM_MEMORY_BLOCKS; i++)
     {
@@ -56,10 +56,9 @@ void MemoryManager::showCurrentBlocks(File &f)
     }
 }
 
-
 void MemoryManager::allocateThreads(string threadName, string content)
 {
-    int needBlock = (content.size()+39)/40;
+    int needBlock = (content.size() + 39) / 40;
     File tmp;
     tmp.id = threadsID++, tmp.name = threadName;
     fileNameIdConvert[threadName] = tmp.id;
@@ -70,10 +69,10 @@ void MemoryManager::allocateThreads(string threadName, string content)
         for (int i = 0; i < needBlock; i++)
         {
             string nowContent;
-            if(i==needBlock-1)
-                nowContent = content.substr(i*40,40);
-            else 
-                nowContent = content.substr(i*40);
+            if (i == needBlock - 1)
+                nowContent = content.substr(i * 40, 40);
+            else
+                nowContent = content.substr(i * 40);
             MemoryBlock newBlock = {blocks[j], false, nowContent}; // 找到空闲内存
             tmp.blocks.push_back(newBlock);                        // 填入相关信息
             tmp.page_table[i] = PageTableEntry{blocks[j], 0, tmp.id, true, get_current_time()};
@@ -94,7 +93,7 @@ void MemoryManager::allocateThreads(string threadName, string content)
         int j = blocks.size() - 1, nowsize = blocks.size();
         for (int i = 0; i < nowsize; i++)
         {
-            string nowContent = content.substr(i*40);
+            string nowContent = content.substr(i * 40);
             MemoryBlock newBlock = {blocks[j], false, nowContent}; // 找到空闲内存
             tmp.blocks.push_back(newBlock);                        // 填入相关信息
             tmp.page_table[i] = PageTableEntry{blocks[j], 0, tmp.id, true, get_current_time()};
@@ -114,10 +113,10 @@ void MemoryManager::allocateThreads(string threadName, string content)
 
             int avaBlock = threads[lrublock.thread_id].page_table[lrublock.page_id].memory_block_id;
             string nowContent;
-            if(i==needBlock-1)
-                nowContent = content.substr(i*40,40);
-            else 
-                nowContent = content.substr(i*40);
+            if (i == needBlock - 1)
+                nowContent = content.substr(i * 40, 40);
+            else
+                nowContent = content.substr(i * 40);
             MemoryBlock newBlock = {avaBlock, false, nowContent};
             tmp.blocks.push_back(newBlock);
             tmp.page_table[i] = PageTableEntry{avaBlock, 0, tmp.id, true, get_current_time()};
@@ -128,11 +127,11 @@ void MemoryManager::allocateThreads(string threadName, string content)
 }
 void MemoryManager::showPage(string threadName)
 {
-    int fileId=fileNameIdConvert[threadName];
-    printf("*****************************");
-        printf("Page id            block id\n");
-    for (auto&page:threads[fileId].page_table)
-        printf("%d                     %d\n",page.first,page.second.memory_block_id);
+    int fileId = fileNameIdConvert[threadName];
+    printf("------------页表--------------\n");
+    printf("Page id            block id\n");
+    for (auto &page : threads[fileId].page_table)
+        printf("%d                     %d\n", page.first, page.second.memory_block_id);
 }
 int MemoryManager::findDiskBlock(int thread_id, int pageid)
 {
@@ -153,7 +152,7 @@ void MemoryManager::deleteBlock(string threadName)
     File thread = threads[threadID];
     threads.erase(threadID);
     printf("\nThe memory we need to delete is as follows:\n");
-    set <int> s;
+    set<int> s;
     for (auto &page : thread.page_table)
     {
         if (page.second.in_memory) // 在内存中就释放
@@ -175,7 +174,6 @@ void MemoryManager::deleteBlock(string threadName)
             printf("#");
     }
 }
-
 
 void MemoryManager::acessPage(int thread_id, int page_num)
 {

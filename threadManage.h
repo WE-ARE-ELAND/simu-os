@@ -19,6 +19,7 @@ public:
     MemoryManager memoryManager;
     vector<std::thread> threads;
     mutex input_mutex;
+    vector<string> opened_file;
     //"1.mkdir 2.rmdir 3.cd 4.ls 5.rm 6.touch 7.tree 8.readFile 9.writeFile 10.rename 11.exit\n"
     unordered_map<string, int> branch_table = {
         {"mkdir", 1},

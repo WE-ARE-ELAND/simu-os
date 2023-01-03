@@ -15,7 +15,7 @@ void ThreadManager::data_generation_thread(string fileName)
         // 成功分配内存块
         int first_block = DIM.fileNameToNumOfBlock[newFile->name]; // 获取文件名对应的第一个盘块号
         cout << "数据生成进程：文件磁盘块分配成功，分配的磁盘号为：";
-        for (auto i : DIM.getAllBlocks(name))
+        for (auto i : DIM.getAllBlocks(fileName))
         {
             cout << i << " ";
         }
@@ -37,6 +37,17 @@ void ThreadManager::delete_data_thread(string name)
     int sleep_time = this->generateNumber(2000, 5000); // 2-5秒的时延，体现多线程机制
     std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
     bool isDelFormDir = DIR.DeleteFile(name); // 目录中没有这个文件返回false，有这个文件返回并删除返回true
+    bool isOpened = false;
+    for (string s : opened_file)
+    {
+        if (s == name)
+        {
+            isOpened = true;
+            cout << "数据删除进程：该文件已在内存中，不能被删除！" << endl;
+            return;
+            break;
+        }
+    }
     if (isDelFormDir)
     {
         cout << "数据删除进程：该文件在目录中删除，正在回收外存..." << endl;
@@ -63,14 +74,16 @@ void ThreadManager::execute_thread(string name)
     if (file) // 文件存在，且有权限
     {
         cout << "执行线程：将文件调入内存中..." << endl;
+        int sleep_time = this->generateNumber(2000, 5000); // 2-5秒的时延
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
         memoryManager.allocateThreads(name, file->context);
-        // TODO:调用内存管理的空闲空间管理功能，申请8块内存空间
-
+        cout << endl;
+        memoryManager.showPage(name);
         cout << "打开成功！" << endl;
-        // cout << file->context << endl;
-        // input_mutex.lock();
+        // 在文件打开表中记录
+        opened_file.push_back(name);
+        // 输出磁盘内容
         cout << DIM.ReadFileDataFromDisk(file->name) << endl;
-        // input_mutex.unlock();
     }
     else
     {
@@ -242,5 +255,6 @@ void ThreadManager::showMenu()
             cout << "该命令不存在，请重新输入" << endl;
         }
         }
+        DIM.dumpFile();
     }
 }
