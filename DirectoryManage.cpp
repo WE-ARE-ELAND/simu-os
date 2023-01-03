@@ -20,7 +20,7 @@ void DirectoryManage::login()
 {
 	string account;
 	string password;
-	cout << "---------登录目录管理系统---------\n";
+	cout << "---------登录SimuOs操作系统---------\n";
 	cout << "账号：";
 	cin >> account;
 	cout << "密码：";
