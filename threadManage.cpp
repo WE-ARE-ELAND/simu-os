@@ -14,7 +14,12 @@ void ThreadManager::data_generation_thread(string fileName)
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
         // 成功分配内存块
         int first_block = DIM.fileNameToNumOfBlock[newFile->name]; // 获取文件名对应的第一个盘块号
-        cout << "数据生成进程：文件磁盘块分配成功，起始的磁盘号为：" << first_block << endl;
+        cout << "数据生成进程：文件磁盘块分配成功，分配的磁盘号为：";
+        for (auto i : DIM.getAllBlocks(name))
+        {
+            cout << i << " ";
+        }
+        cout << endl;
         cout << "数据生成进程：创建目录项中..." << endl;
         sleep_time += 1000;
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
