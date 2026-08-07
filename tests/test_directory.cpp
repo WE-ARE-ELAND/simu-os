@@ -1,4 +1,9 @@
-#include "DirectoryManage.h"
+#include "directoryManage.h"
+#include <iostream>
+#include <string>
+#include <cstdlib>
+
+using namespace std;
 
 int main() {
 	DirectoryManage DIR;
@@ -8,7 +13,7 @@ int main() {
 		<< "1.md 2.rd 3.cd 4.dir 5.del 6.create 7.tree 8.readFile 9.writeFile 10.rename 11.exit\n";
 	while(true){
 		string path = "";
-		path=DIR.GetPath(DIR.workDir);
+		path=DIR.GetPath(DIR.getWorkDir());
 		cout << path<<">:";
 		cin >> sel;
 		switch (sel) {
@@ -55,7 +60,7 @@ int main() {
 			}
 			case 7:
 			{
-				DIR.tree(DIR.workDir, -1);
+				DIR.tree(DIR.getWorkDir(), -1);
 				break;
 			}
 			case 8: {
@@ -82,7 +87,9 @@ int main() {
 			}
 			case 11:
 				exit(0);
-			default:exit(0);
+			default:
+				cout << "无效选项，退出\n";
+				exit(0);
 		}
 	}
 }

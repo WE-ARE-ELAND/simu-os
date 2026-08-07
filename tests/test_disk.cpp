@@ -1,4 +1,6 @@
-#include "DiskManager.h"
+#include "diskManager.h"
+
+using namespace std;
 
 int main()
 {
@@ -62,7 +64,7 @@ int main()
             cin >> data;
             if (DIM.AllocateBlocks(name, size, data) == 1)
             {
-                cout << "文件分配成功，起始磁盘号为：" << DIM.fileNameToNumOfBlock[name] << endl;
+                cout << "文件分配成功，起始磁盘号为：" << DIM.getFirstBlock(name) << endl;
                 break;
             }
             cout << "文件分分配失败，空间不足。" << endl;

@@ -1,0 +1,26 @@
+CXX       = C:/Users/Elon/scoop/apps/mingw/current/bin/g++
+CXXFLAGS  = -std=c++11 -MMD -MP -Wall -Wextra -I../include -I../src -pthread -fexec-charset=gbk -finput-charset=utf-8
+EXEEXT    =
+
+OBJS = tests/test_disk.o src/diskManage.o
+TARGET = build/test_disk$(EXEEXT)
+
+.PHONY: all clean run
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	@mkdir -p build 2>/dev/null || true
+	$(CXX) $(CXXFLAGS) $(OBJS) -o $(TARGET)
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+run: $(TARGET)
+	@./$(TARGET)
+
+clean:
+	$(RM) $(OBJS) $(TARGET)
+	$(RM) tests/*.d src/*.d
+
+-include $(OBJS:.o=.d)

@@ -1,5 +1,20 @@
-.vscode
-*.exe
-DiskManager1.cpp
-DiskManager2.cpp
-test.cpp
+# Build output
+build/
+*.o
+*.d
+
+# Generated disk images
+disk.txt
+
+# Pre-populated disk sample (large, derived)
+docs/DiskManage/
+
+# IDE
+.idea/
+.vscode/
+.claude/
+
+CLAUDE.md
+
+# OS
+.DS_Store
