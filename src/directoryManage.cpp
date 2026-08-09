@@ -1,7 +1,7 @@
 #include "directoryManage.h"
 
 DirectoryManage::DirectoryManage()
-    : workDir_(nullptr), rootDir_(nullptr), path_("")
+    : workDir_(nullptr), rootDir_(nullptr)
 {
     user_.name = "login_failed";
     user_.userRight = 0;
@@ -17,22 +17,23 @@ DirectoryManage::~DirectoryManage()
 
 void DirectoryManage::login()
 {
-    std::string account, password;
-    std::cout << "--------- SimuOS Login ---------\n";
-    std::cout << "Login: ";
-    std::cin >> account;
-    std::cout << "Password: ";
-    std::cin >> password;
-    user_ = QueryUser(account, password);
-    if (user_.state == 0) {
-        std::cout << "Login failed! Please try again.\n";
-        login();
+    while (user_.state == 0)
+    {
+        std::string account, password;
+        std::cout << "--------- SimuOS Login ---------\n";
+        std::cout << "Login: ";
+        std::cin >> account;
+        std::cout << "Password: ";
+        std::cin >> password;
+        user_ = QueryUser(account, password);
+        if (user_.state == 0)
+            std::cout << "Login failed! Please try again.\n\n";
     }
     CreateRootDirectory();
     MakeDir(user_.name);
 }
 
-DirectoryManage::User DirectoryManage::QueryUser(std::string account, std::string password)
+DirectoryManage::User DirectoryManage::QueryUser(const std::string& account, const std::string& password)
 {
     User userList[] = {
         {"admin", 1, "admin", "admin", 0},
@@ -68,7 +69,7 @@ void DirectoryManage::CreateRootDirectory()
     workDir_ = rootDir_;
 }
 
-void DirectoryManage::tree(Directory* curDir, int level)
+void DirectoryManage::tree(Directory* curDir, int level) const
 {
     if (curDir == workDir_)
         std::cout << curDir->name << "\n";
@@ -90,7 +91,7 @@ void DirectoryManage::tree(Directory* curDir, int level)
     }
 }
 
-void DirectoryManage::MakeDir(std::string name)
+void DirectoryManage::MakeDir(const std::string& name)
 {
     std::unique_ptr<Directory> newDir(new Directory());
     newDir->name = name;
@@ -118,7 +119,7 @@ void DirectoryManage::MakeDir(std::string name)
     std::cout << "Directory '" << name << "' created successfully.\n";
 }
 
-void DirectoryManage::cdDir(std::string path)
+void DirectoryManage::cdDir(const std::string& path)
 {
     if (path == "..") {
         if (workDir_->parentDirectory)
@@ -163,7 +164,7 @@ void DirectoryManage::cdDir(std::string path)
     std::cout << "Invalid path.\n";
 }
 
-void DirectoryManage::rd(std::string name)
+void DirectoryManage::rd(const std::string& name)
 {
     if (workDir_->firstChildDirectory == nullptr) {
         std::cout << "No subdirectories to delete.\n";
@@ -173,18 +174,21 @@ void DirectoryManage::rd(std::string name)
     while (p) {
         if (p->name == name) {
             Directory* prev = p->frontDirectory;
+            std::unique_ptr<Directory> cur;
+            if (prev)
+                cur = std::move(prev->nextDirectory);
+            else
+                cur = std::move(workDir_->firstChildDirectory);
+            Directory* tail = cur->nextDirectory.release();
             if (prev) {
-                prev->nextDirectory.reset();
-                prev->nextDirectory = std::move(p->nextDirectory);
-                if (p->nextDirectory)
-                    p->nextDirectory->frontDirectory = prev;
+                prev->nextDirectory.reset(tail);
+                if (tail) tail->frontDirectory = prev;
             } else {
-                workDir_->firstChildDirectory.reset();
-                workDir_->firstChildDirectory = std::move(p->nextDirectory);
-                if (p->nextDirectory)
-                    p->nextDirectory->frontDirectory = nullptr;
+                workDir_->firstChildDirectory.reset(tail);
+                if (tail) tail->frontDirectory = nullptr;
             }
-            DeleteDir(p);
+            Directory* doomed = cur.release();
+            DeleteDir(doomed);
             std::cout << "Directory '" << name << "' deleted successfully.\n";
             return;
         }
@@ -197,29 +201,25 @@ void DirectoryManage::DeleteDir(Directory* p)
 {
     if (!p) return;
     if (p->firstChildDirectory) {
-        Directory* ptr = p->firstChildDirectory.get();
+        Directory* ptr = p->firstChildDirectory.release();
         while (ptr) {
-            Directory* next = ptr->nextDirectory.get();
-            ptr->nextDirectory.reset();
+            Directory* next = ptr->nextDirectory.release();
             DeleteDir(ptr);
             ptr = next;
         }
-        p->firstChildDirectory.reset();
     }
     if (p->firstChildFile) {
-        DirectoryEntry* ptr = p->firstChildFile.get();
+        DirectoryEntry* ptr = p->firstChildFile.release();
         while (ptr) {
-            DirectoryEntry* next = ptr->nextFile.get();
-            ptr->nextFile.reset();
+            DirectoryEntry* next = ptr->nextFile.release();
             delete ptr;
             ptr = next;
         }
-        p->firstChildFile.reset();
     }
     delete p;
 }
 
-void DirectoryManage::ListByName(const std::string& name)
+void DirectoryManage::ListByName(const std::string& name) const
 {
     // Check if it's a file first
     if (workDir_->firstChildFile) {
@@ -251,7 +251,7 @@ void DirectoryManage::dir()
     ListAll();
 }
 
-void DirectoryManage::ListAll()
+void DirectoryManage::ListAll() const
 {
     std::cout << "----------------------------------------------------------------\n";
     std::queue<Directory*> q;
@@ -260,8 +260,7 @@ void DirectoryManage::ListAll()
         Directory* p = q.front();
         q.pop();
         if (p->firstChildDirectory || p->firstChildFile) {
-            GetPath(p);
-            std::cout << "Contents of " << path_ << ": \n";
+            std::cout << "Contents of " << GetPath(p) << ": \n";
         }
         if (p->firstChildDirectory) {
             Directory* ptr = p->firstChildDirectory.get();
@@ -285,7 +284,21 @@ void DirectoryManage::ListAll()
     std::cout << "----------------------------------------------------------------\n";
 }
 
-void DirectoryManage::dirFile(std::string name)
+std::vector<std::string> DirectoryManage::listChildNames() const
+{
+    std::vector<std::string> names;
+    if (workDir_->firstChildDirectory) {
+        for (Directory* p = workDir_->firstChildDirectory.get(); p; p = p->nextDirectory.get())
+            names.push_back(p->name);
+    }
+    if (workDir_->firstChildFile) {
+        for (DirectoryEntry* p = workDir_->firstChildFile.get(); p; p = p->nextFile.get())
+            names.push_back(p->file.name);
+    }
+    return names;
+}
+
+void DirectoryManage::dirFile(const std::string& name) const
 {
     if (workDir_->firstChildFile) {
         DirectoryEntry* ptr = workDir_->firstChildFile.get();
@@ -311,15 +324,14 @@ void DirectoryManage::dirFile(std::string name)
     std::cout << "File not found.\n";
 }
 
-void DirectoryManage::ListDir(Directory* p)
+void DirectoryManage::ListDir(Directory* p) const
 {
     if (p->canRead != user_.userRight && p->canRead != 1) {
         std::cout << "Permission denied: cannot read directory info.\n";
         return;
     }
     if (p->firstChildDirectory || p->firstChildFile) {
-        GetPath(p);
-        std::cout << "Contents of " << path_ << ": \n";
+        std::cout << "Contents of " << GetPath(p) << ": \n";
     } else {
         std::cout << "Directory is empty.\n";
         return;
@@ -342,7 +354,7 @@ void DirectoryManage::ListDir(Directory* p)
     }
 }
 
-void DirectoryManage::dirPath(std::string path)
+void DirectoryManage::dirPath(const std::string& path) const
 {
     std::queue<std::string> Path;
     std::string curPath;
@@ -381,7 +393,7 @@ void DirectoryManage::dirPath(std::string path)
     std::cout << "Invalid path or directory not found.\n";
 }
 
-void DirectoryManage::ren(std::string name, std::string newName)
+void DirectoryManage::ren(const std::string& name, const std::string& newName)
 {
     if (workDir_->firstChildDirectory) {
         Directory* p = workDir_->firstChildDirectory.get();
@@ -406,7 +418,7 @@ void DirectoryManage::ren(std::string name, std::string newName)
     std::cout << "File or directory '" << name << "' not found.\n";
 }
 
-void DirectoryManage::RenameDir(Directory* ptr, std::string newName)
+void DirectoryManage::RenameDir(Directory* ptr, const std::string& newName)
 {
     if (ptr->canWrite != 1 && ptr->canWrite != user_.userRight) {
         std::cout << "Permission denied: cannot rename.\n";
@@ -424,7 +436,7 @@ void DirectoryManage::RenameDir(Directory* ptr, std::string newName)
     std::cout << "Directory renamed to '" << ptr->name << "'.\n";
 }
 
-void DirectoryManage::RenameFile(DirectoryEntry* ptr, std::string newName)
+void DirectoryManage::RenameFile(DirectoryEntry* ptr, const std::string& newName)
 {
     if (ptr->file.canWrite != 1 && ptr->file.canWrite != user_.userRight) {
         std::cout << "Permission denied: cannot rename.\n";
@@ -442,26 +454,21 @@ void DirectoryManage::RenameFile(DirectoryEntry* ptr, std::string newName)
     std::cout << "File renamed to '" << ptr->file.name << "'.\n";
 }
 
-std::string DirectoryManage::GetPath(Directory* curDir)
+std::string DirectoryManage::GetPath(Directory* curDir) const
 {
-    path_ = "";
+    std::string path;
     std::stack<Directory*> q;
-    q.push(curDir);
-    while (curDir->parentDirectory) {
-        q.push(curDir->parentDirectory);
-        curDir = curDir->parentDirectory;
-    }
+    Directory* d = curDir;
+    while (d) { q.push(d); d = d->parentDirectory; }
     while (!q.empty()) {
-        Directory* p = q.top();
+        path += q.top()->name;
         q.pop();
-        path_ += p->name;
-        if (!q.empty())
-            path_ += "\\";
+        if (!q.empty()) path += "\\";
     }
-    return path_;
+    return path;
 }
 
-DirectoryManage::File DirectoryManage::CreateFile(std::string name)
+DirectoryManage::File DirectoryManage::CreateFile(const std::string& name)
 {
     DirectoryEntry* p = workDir_->firstChildFile.get();
     while (p) {
@@ -500,7 +507,7 @@ void DirectoryManage::CreateDirEntry(File file, int first_block)
     workDir_->lastChildFile = newDirEntry.get();
 }
 
-bool DirectoryManage::DeleteFile(std::string name)
+bool DirectoryManage::DeleteFile(const std::string& name)
 {
     if (workDir_->firstChildFile == nullptr)
         return false;
@@ -508,20 +515,22 @@ bool DirectoryManage::DeleteFile(std::string name)
     while (ptr) {
         if (ptr->file.name == name) {
             DirectoryEntry* prev = ptr->frontFile;
+            std::unique_ptr<DirectoryEntry> cur;
+            if (prev)
+                cur = std::move(prev->nextFile);
+            else
+                cur = std::move(workDir_->firstChildFile);
+            DirectoryEntry* tail = cur->nextFile.release();
             if (prev) {
-                prev->nextFile.reset();
-                prev->nextFile = std::move(ptr->nextFile);
-                if (ptr->nextFile)
-                    ptr->nextFile->frontFile = prev;
+                prev->nextFile.reset(tail);
+                if (tail) tail->frontFile = prev;
             } else {
-                workDir_->firstChildFile.reset();
-                workDir_->firstChildFile = std::move(ptr->nextFile);
-                if (ptr->nextFile)
-                    ptr->nextFile->frontFile = nullptr;
+                workDir_->firstChildFile.reset(tail);
+                if (tail) tail->frontFile = nullptr;
             }
             if (ptr == workDir_->lastChildFile)
                 workDir_->lastChildFile = prev;
-            delete ptr;
+            delete cur.release();
             return true;
         }
         ptr = ptr->nextFile.get();
@@ -529,7 +538,7 @@ bool DirectoryManage::DeleteFile(std::string name)
     return false;
 }
 
-DirectoryManage::File* DirectoryManage::ReadFile(std::string path)
+DirectoryManage::File* DirectoryManage::ReadFile(std::string path) const
 {
     std::queue<std::string> Path;
     std::string curPath;
@@ -548,8 +557,8 @@ DirectoryManage::File* DirectoryManage::ReadFile(std::string path)
         Directory* p = q.front();
         q.pop();
         if (Path.size() == 1) {
-            if (workDir_->firstChildFile) {
-                DirectoryEntry* t = workDir_->firstChildFile.get();
+            if (p->firstChildFile) {
+                DirectoryEntry* t = p->firstChildFile.get();
                 while (t) {
                     if (t->file.name == Path.front()) {
                         if (t->file.canRead != 1 &&
@@ -579,7 +588,7 @@ DirectoryManage::File* DirectoryManage::ReadFile(std::string path)
     return nullptr;
 }
 
-DirectoryManage::File* DirectoryManage::WriteFile(std::string name)
+DirectoryManage::File* DirectoryManage::WriteFile(const std::string& name)
 {
     if (workDir_->firstChildFile) {
         DirectoryEntry* p = workDir_->firstChildFile.get();
@@ -605,7 +614,7 @@ DirectoryManage::File* DirectoryManage::WriteFile(std::string name)
     return nullptr;
 }
 
-DirectoryManage::File* DirectoryManage::OpenFile(std::string name)
+DirectoryManage::File* DirectoryManage::OpenFile(std::string name) const
 {
     if (workDir_->firstChildFile) {
         DirectoryEntry* p = workDir_->firstChildFile.get();
@@ -621,7 +630,7 @@ DirectoryManage::File* DirectoryManage::OpenFile(std::string name)
     return nullptr;
 }
 
-DirectoryManage::File* DirectoryManage::CloseFile(std::string name)
+DirectoryManage::File* DirectoryManage::CloseFile(std::string name) const
 {
     if (workDir_->firstChildFile) {
         DirectoryEntry* p = workDir_->firstChildFile.get();
@@ -634,5 +643,32 @@ DirectoryManage::File* DirectoryManage::CloseFile(std::string name)
         }
     }
     std::cout << "File '" << name << "' not found.\n";
+    return nullptr;
+}
+
+bool DirectoryManage::isDir(const std::string& name) const
+{
+    if (workDir_->firstChildDirectory) {
+        for (Directory* p = workDir_->firstChildDirectory.get(); p; p = p->nextDirectory.get())
+            if (p->name == name) return true;
+    }
+    return false;
+}
+
+bool DirectoryManage::isFile(const std::string& name) const
+{
+    if (workDir_->firstChildFile) {
+        for (DirectoryEntry* p = workDir_->firstChildFile.get(); p; p = p->nextFile.get())
+            if (p->file.name == name) return true;
+    }
+    return false;
+}
+
+const DirectoryManage::File* DirectoryManage::getFile(const std::string& name) const
+{
+    if (workDir_->firstChildFile) {
+        for (DirectoryEntry* p = workDir_->firstChildFile.get(); p; p = p->nextFile.get())
+            if (p->file.name == name) return &p->file;
+    }
     return nullptr;
 }

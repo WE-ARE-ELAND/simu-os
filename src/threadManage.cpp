@@ -1,10 +1,10 @@
 #include <cstdlib>
 #include <ctime>
+#include <random>
 #include "threadManage.h"
 
-ThreadManager::ThreadManager()
+ThreadManager::ThreadManager() : memoryManager_(DIM_)
 {
-    srand(static_cast<unsigned>(std::time(nullptr)));
     initialize();
 }
 
@@ -13,11 +13,10 @@ int ThreadManager::initialize()
     return 0;
 }
 
-void ThreadManager::data_generation_thread(std::string fileName)
+void ThreadManager::data_generation_thread(const std::string& fileName)
 {
-    input_mutex_.lock();
+    std::lock_guard<std::mutex> lock(input_mutex_);
     DirectoryManage::File newFile = DIR_.CreateFile(fileName);
-    input_mutex_.unlock();
     if (newFile.name.empty())
     {
         std::cout << "[data_gen] File creation failed (name may already exist)" << std::endl;
@@ -48,7 +47,7 @@ void ThreadManager::data_generation_thread(std::string fileName)
     }
 }
 
-void ThreadManager::delete_data_thread(std::string name)
+void ThreadManager::delete_data_thread(const std::string& name)
 {
     int sleep_time = generateNumber(2000, 5000);
     std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
@@ -90,7 +89,7 @@ void ThreadManager::delete_data_thread(std::string name)
     }
 }
 
-void ThreadManager::execute_thread(std::string name)
+void ThreadManager::execute_thread(const std::string& name)
 {
     DirectoryManage::File *file = DIR_.ReadFile(name);
     if (file)
@@ -124,7 +123,9 @@ void ThreadManager::joinAllThreads()
 
 int ThreadManager::generateNumber(int min, int max)
 {
-    return rand() % (max - min + 1) + min;
+    static thread_local std::mt19937 rng(std::hash<std::thread::id>{}(std::this_thread::get_id()));
+    std::uniform_int_distribution<int> dist(min, max);
+    return dist(rng);
 }
 
 void ThreadManager::refresh()
