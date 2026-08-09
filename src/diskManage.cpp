@@ -3,7 +3,7 @@
 
 DiskManager::DiskManager()
 {
-    FreeDataBlockNum_ = NUM_BLOCKS_ - NUM_FAT_BLOCKS_; // 前52块用于存储FAT表
+    FreeDataBlockNum_ = NUM_BLOCKS_ - NUM_FAT_BLOCKS_; // First 52 blocks used for FAT table
     FreeSwapBlockNum_ = NUM_SWAP_BLOCKS_;
     init();
 }
@@ -34,7 +34,7 @@ void DiskManager::initFat()
 
 void DiskManager::initFreeBlocks()
 {
-    int num_block = NUM_FAT_BLOCKS_; // 空闲块号从52到1023
+    int num_block = NUM_FAT_BLOCKS_; // Free block numbers from 52 to 1023
     for (int i = 0; i < NUM_FREE_GROUPS_; ++i)
     {
         if (i == NUM_FREE_GROUPS_ - 1)
@@ -60,8 +60,8 @@ void DiskManager::initFreeBlocks()
 }
 
 /**
- * 利用成组连接法分配空闲块
- * @return 分配的磁盘块块号，若为-1表示分配失败
+ * Allocate free blocks using grouped free-list method
+ * @return Allocated block number, -1 on failure
  */
 short DiskManager::allocateBlock()
 {
@@ -216,10 +216,10 @@ std::string DiskManager::ReadFileDataFromDisk(std::string fileName)
     int num_block = start_num_block;
     while (fatList_[num_block] != -1)
     {
-        data.append("盘块" + std::to_string(num_block) + ":" + readBlock(num_block) + "\n");
+        data.append("Block " + std::to_string(num_block) + ":" + readBlock(num_block) + "\n");
         num_block = fatList_[num_block];
     }
-    data.append("盘块" + std::to_string(num_block) + ":" + readBlock(num_block) + "\n");
+    data.append("Block " + std::to_string(num_block) + ":" + readBlock(num_block) + "\n");
     return data;
 }
 
@@ -252,11 +252,11 @@ void DiskManager::printFreeBlocks()
     for (int i = 0; i < freeBlocks_[0][0] + 2; ++i)
     {
         if (i == 0)
-            std::cout << "该组空闲块数：";
+            std::cout << "Free blocks in this group: ";
         if (i == 1)
-            std::cout << "下一组编号：";
+            std::cout << "Next group number: ";
         if (i == 2)
-            std::cout << std::endl << "空闲块编号：" << std::endl;
+            std::cout << std::endl << "Free block numbers:\n";
         if (i > 2 && (i - 2) % 10 == 0)
             std::cout << std::endl;
         std::cout << freeBlocks_[0][i] << " \t";

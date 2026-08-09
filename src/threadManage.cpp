@@ -20,10 +20,9 @@ void ThreadManager::data_generation_thread(std::string fileName)
     input_mutex_.unlock();
     if (newFile.name.empty())
     {
-        std::cout << "数据生成进程：文件创建失败（可能已重名）" << std::endl;
+        std::cout << "[data_gen] File creation failed (name may already exist)" << std::endl;
         return;
     }
-    std::cout << "后台处理中，您可继续执行其他命令..." << std::endl;
     int status = DIM_.AllocateBlocks(
         newFile.name, newFile.size / DiskManager::BLOCK_SIZE + 1, newFile.context);
     if (status == 1)
@@ -31,21 +30,21 @@ void ThreadManager::data_generation_thread(std::string fileName)
         int sleep_time = generateNumber(2000, 5000);
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
         int first_block = DIM_.getFileNameToNumOfBlock().at(fileName);
-        std::cout << "数据生成进程：文件磁盘块分配成功，分配的磁盘号为：";
+        std::cout << "[data_gen] Disk blocks allocated. Blocks: ";
         for (auto i : DIM_.getAllBlocks(fileName))
         {
             std::cout << i << " ";
         }
         std::cout << std::endl;
-        std::cout << "数据生成进程：创建目录项中..." << std::endl;
+        std::cout << "[data_gen] Creating directory entry..." << std::endl;
         sleep_time += 1000;
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
         DIR_.CreateDirEntry(newFile, first_block);
-        std::cout << "数据生成进程：目录项创建成功！" << std::endl;
+        std::cout << "[data_gen] Directory entry created successfully!" << std::endl;
     }
     else
     {
-        std::cout << "数据生成进程：磁盘空间不足，磁盘块分配失败！" << std::endl;
+        std::cout << "[data_gen] Insufficient disk space, allocation failed!" << std::endl;
     }
 }
 
@@ -54,7 +53,7 @@ void ThreadManager::delete_data_thread(std::string name)
     int sleep_time = generateNumber(2000, 5000);
     std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
 
-    // 先检查文件是否已打开，再尝试从目录中删除
+    // First check if file is open, then try to delete from directory
     bool isOpened = false;
     for (const std::string &s : opened_file_)
     {
@@ -66,18 +65,18 @@ void ThreadManager::delete_data_thread(std::string name)
     }
     if (isOpened)
     {
-        std::cout << "数据删除进程：该文件已在内存中，不能被删除！" << std::endl;
+        std::cout << "[data_del] File is open in memory, cannot be deleted!" << std::endl;
         return;
     }
 
     bool isDelFormDir = DIR_.DeleteFile(name);
     if (isDelFormDir)
     {
-        std::cout << "数据删除进程：该文件在目录中删除，正在回收外存..." << std::endl;
+        std::cout << "[data_del] File removed from directory, reclaiming disk..." << std::endl;
         sleep_time += 1000;
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
-        std::cout << "数据删除进程：外存回收成功！" << std::endl;
-        std::cout << "被回收的磁盘块号为：";
+        std::cout << "[data_del] Disk space reclaimed successfully!" << std::endl;
+        std::cout << "[data_del] Reclaimed blocks: ";
         for (auto i : DIM_.getAllBlocks(name))
         {
             std::cout << i << " ";
@@ -87,7 +86,7 @@ void ThreadManager::delete_data_thread(std::string name)
     }
     else
     {
-        std::cout << "数据删除进程：不存在该文件！" << std::endl;
+        std::cout << "[data_del] File not found!" << std::endl;
     }
 }
 
@@ -96,7 +95,7 @@ void ThreadManager::execute_thread(std::string name)
     DirectoryManage::File *file = DIR_.ReadFile(name);
     if (file)
     {
-        std::cout << "执行线程：将文件调入内存中..." << std::endl;
+        std::cout << "[exec] Loading file into memory..." << std::endl;
         int sleep_time = generateNumber(2000, 5000);
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
         {
@@ -105,13 +104,13 @@ void ThreadManager::execute_thread(std::string name)
             std::cout << std::endl;
             memoryManager_.showPage(name);
         }
-        std::cout << "打开成功！" << std::endl;
+        std::cout << "Open successful!" << std::endl;
         opened_file_.push_back(name);
         std::cout << DIM_.ReadFileDataFromDisk(file->name) << std::endl;
     }
     else
     {
-        std::cout << "执行进程：文件不存在或权限不足！" << std::endl;
+        std::cout << "[exec] File not found or permission denied!" << std::endl;
     }
 }
 
@@ -131,7 +130,7 @@ int ThreadManager::generateNumber(int min, int max)
 void ThreadManager::refresh()
 {
     std::string path = DIR_.GetPath(DIR_.getWorkDir());
-    std::cout << "主线程：" << path << ">:";
+    std::cout << "[" << DIR_.getUserName() << "@simuos " << path << "]$ ";
 }
 
 // Getters for CLI / tests
