@@ -9,6 +9,10 @@ disk.txt
 # Pre-populated disk sample (large, derived)
 docs/DiskManage/
 
+# Development plans (not tracked)
+docs/development-plan.md
+docs/ai-agent-refactoring-plan.md
+
 # IDE
 .idea/
 .vscode/
