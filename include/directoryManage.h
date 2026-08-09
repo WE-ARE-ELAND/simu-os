@@ -70,11 +70,12 @@ public:
     void cdDir(std::string path);
     void rd(std::string name);
     void DeleteDir(Directory* p);
-    void dir();
     void ListDir(Directory* p);
     void ListAll();
+    void ListByName(const std::string& name);
     void dirFile(std::string name);
     void dirPath(std::string path);
+    void dir();
     void ren(std::string name, std::string newName);
     void RenameDir(Directory* ptr, std::string newName);
     void RenameFile(DirectoryEntry* ptr, std::string newName);
@@ -89,6 +90,7 @@ public:
 
     Directory* getWorkDir() const { return workDir_; }
     Directory* getRootDir() const { return rootDir_; }
+    std::string getUserName() const { return user_.name; }
 
 private:
     Directory* workDir_ = nullptr;

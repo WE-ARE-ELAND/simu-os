@@ -1,5 +1,5 @@
 CXX       = C:/Users/Elon/scoop/apps/mingw/current/bin/g++
-CXXFLAGS  = -std=c++11 -MMD -MP -Wall -Wextra -Iinclude -Isrc -pthread -fexec-charset=gbk -finput-charset=utf-8
+CXXFLAGS  = -std=c++11 -MMD -MP -Wall -Wextra -Iinclude -Isrc -pthread
 EXEEXT    =
 
 OBJS = src/threadManage.o \

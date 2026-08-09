@@ -10,7 +10,7 @@
 class DiskManager
 {
 public:
-    // 常量
+    // Constants
     static constexpr int BLOCK_SIZE = 40;
     static constexpr int NUM_BLOCKS_ = 1024;
     static constexpr int NUM_FAT_BLOCKS_ = 52;
@@ -21,7 +21,7 @@ public:
 
     DiskManager();
 
-    // 外部函数
+    // External functions
     int AllocateBlocks(std::string fileName, int size, std::string data);
     void DeallocateBlocks(std::string fileName);
     std::string ReadFileDataFromDisk(std::string fileName);
@@ -29,12 +29,12 @@ public:
     void writeSwapBlock(short blockNum, std::string buffer);
     std::vector<int> getAllBlocks(std::string fileName);
 
-    // 输出函数
+    // Output functions
     void dumpFile();
     void PrintMyDisk();
     void printFreeBlocks();
 
-    // 测试用（测试文件直接访问的公共接口）
+    // For testing (public interface for test files)
     short allocateBlock();
     int freeBlock(short num_block);
     void writeBlock(short num_block, std::string data);

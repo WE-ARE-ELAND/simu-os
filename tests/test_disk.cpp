@@ -6,7 +6,7 @@ int main()
 {
     DiskManager DIM;
 
-    cout << "1. 分配磁盘块 2. 回收磁盘块\n 3. 写入数据 4. 读取数据\n 5. 创建文件 6. 删除文件\n 7. 写入交换区 8. 读取交换区\n 9. 查看空闲块 10. 退出" << endl;
+    cout << "1. Allocate block 2. Free block\n 3. Write data 4. Read data\n 5. Create file 6. Delete file\n 7. Write swap 8. Read swap\n 9. View free blocks 10. Exit" << endl;
     while (true)
     {
         int sel;
@@ -16,36 +16,36 @@ int main()
         case 1:
         {
             short num_block = DIM.allocateBlock();
-            cout << "分配的磁盘块为" << num_block;
+            cout << "Allocated block: " << num_block;
             break;
         }
         case 2:
         {
-            cout << "请输入需要回收的磁盘块号：" << endl;
+            cout << "Enter block number to free: " << endl;
             short num_block;
             cin >> num_block;
             if (DIM.freeBlock(num_block) == 1)
             {
-                cout << num_block << "回收成功；" << endl;
+                cout << num_block << " freed successfully.\n" << endl;
                 break;
             }
-            cout << "此磁盘块已经空闲" << endl;
+            cout << "This block is already free." << endl;
             break;
         }
         case 3:
         {
-            cout << "请输入要写入的磁盘块号：" << endl;
+            cout << "Enter block number to write: " << endl;
             short num_block;
             cin >> num_block;
             string data;
-            cout << "请输入要写入的文件数据：" << endl;
+            cout << "Enter data to write: " << endl;
             cin >> data;
             DIM.writeBlock(num_block, data);
             break;
         }
         case 4:
         {
-            cout << "请输入要读取的磁盘块号：" << endl;
+            cout << "Enter block number to read: " << endl;
             short num_block;
             cin >> num_block;
             string data = DIM.readBlock(num_block);
@@ -55,48 +55,48 @@ int main()
         case 5:
         {
             string name, data;
-            cout << "文件名" << endl;
+            cout << "File name: " << endl;
             cin >> name;
             int size;
-            cout << "请输入文件大小：" << endl;
+            cout << "Enter file size: " << endl;
             cin >> size;
-            cout << "请输入文件数据：" << endl;
+            cout << "Enter file data: " << endl;
             cin >> data;
             if (DIM.AllocateBlocks(name, size, data) == 1)
             {
-                cout << "文件分配成功，起始磁盘号为：" << DIM.getFirstBlock(name) << endl;
+                cout << "File allocated. First block: " << DIM.getFirstBlock(name) << endl;
                 break;
             }
-            cout << "文件分分配失败，空间不足。" << endl;
+            cout << "Allocation failed: insufficient space." << endl;
             break;
         }
         case 6:
         {
-            cout << "请输入要删除的文件名：" << endl;
+            cout << "Enter file name to delete: " << endl;
             string name;
             cin >> name;
             DIM.DeallocateBlocks(name);
-            cout << "删除成功" << endl;
+            cout << "Deleted successfully." << endl;
             break;
         }
         case 7:
         {
-            cout << "请输入要写入的磁盘块号：" << endl;
+            cout << "Enter swap block number to write: " << endl;
             short num_block;
             cin >> num_block;
             string data;
-            cout << "请输入要写入的文件数据：" << endl;
+            cout << "Enter data to write: " << endl;
             cin >> data;
             DIM.writeSwapBlock(num_block, data);
             break;
         }
         case 8:
         {
-            cout << "请输入要读取的磁盘块号：" << endl;
+            cout << "Enter swap block number to read: " << endl;
             short num_block;
             cin >> num_block;
             string data;
-            cout << "请输入要写入的文件数据：" << endl;
+            cout << "Enter data to write: " << endl;
             cin >> data;
             DIM.readSwapBlock(num_block, data);
             cout << data;
@@ -110,7 +110,7 @@ int main()
         case 10:
         {
             string fileName;
-            cout << "请输入要查询的文件名：" << endl;
+            cout << "Enter file name to query: " << endl;
             cin >> fileName;
             cout << DIM.ReadFileDataFromDisk(fileName) << endl;
             break;
@@ -118,7 +118,7 @@ int main()
         case 11:
         {
             string fileName;
-            cout << "请输入要查询的文件名：" << endl;
+            cout << "Enter file name to query: " << endl;
             cin >> fileName;
             for (int i : DIM.getAllBlocks(fileName))
             {

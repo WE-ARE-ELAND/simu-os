@@ -112,7 +112,7 @@ void MemoryManager::allocateThreads(std::string threadName, std::string content)
 void MemoryManager::showPage(std::string threadName)
 {
     int fileId = fileNameIdConvert_[threadName];
-    std::cout << "------------页表--------------\n";
+    std::cout << "------------ Page Table ------------\n";
     std::cout << "Page id            block id\n";
     for (const auto &page : threads_[fileId].page_table)
         std::cout << page.first << "                     " << page.second.memory_block_id << std::endl;

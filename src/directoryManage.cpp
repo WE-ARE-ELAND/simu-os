@@ -3,10 +3,10 @@
 DirectoryManage::DirectoryManage()
     : workDir_(nullptr), rootDir_(nullptr), path_("")
 {
-    user_.name = "登陆失败";
+    user_.name = "login_failed";
     user_.userRight = 0;
-    user_.account = "登陆失败";
-    user_.password = "登陆失败";
+    user_.account = "login_failed";
+    user_.password = "login_failed";
     user_.state = 0;
 }
 
@@ -18,14 +18,14 @@ DirectoryManage::~DirectoryManage()
 void DirectoryManage::login()
 {
     std::string account, password;
-    std::cout << "---------登录SimuOs操作系统---------\n";
-    std::cout << "账号：";
+    std::cout << "--------- SimuOS Login ---------\n";
+    std::cout << "Login: ";
     std::cin >> account;
-    std::cout << "密码：";
+    std::cout << "Password: ";
     std::cin >> password;
     user_ = QueryUser(account, password);
     if (user_.state == 0) {
-        std::cout << "登陆失败！请重新登录！\n";
+        std::cout << "Login failed! Please try again.\n";
         login();
     }
     CreateRootDirectory();
@@ -41,20 +41,20 @@ DirectoryManage::User DirectoryManage::QueryUser(std::string account, std::strin
         {"user3", 4, "user3", "123456", 0},
         {"user4", 5, "user4", "123456", 0}
     };
-    User FailUser = {"登陆失败", 0, "登陆失败", "登陆失败", 0};
+    User FailUser = {"login_failed", 0, "login_failed", "login_failed", 0};
     for (int i = 0; i < static_cast<int>(sizeof(userList) / sizeof(User)); i++) {
         if (account == userList[i].account) {
             if (password == userList[i].password) {
                 userList[i].state = 1;
-                std::cout << "登陆成功！欢迎" << userList[i].name << "\n";
+                std::cout << "Login successful! Welcome " << userList[i].name << "\n";
                 return userList[i];
             } else {
-                std::cout << "密码错误！\n";
+                std::cout << "Incorrect password!\n";
                 return FailUser;
             }
         }
     }
-    std::cout << "账号不存在！\n";
+    std::cout << "Account not found!\n";
     return FailUser;
 }
 
@@ -64,7 +64,7 @@ void DirectoryManage::CreateRootDirectory()
     rootDir_->name = "root";
     rootDir_->canRead = 1;
     rootDir_->canWrite = 0;
-    std::cout << "创建根目录成功！\n";
+    std::cout << "Root directory created.\n";
     workDir_ = rootDir_;
 }
 
@@ -103,7 +103,7 @@ void DirectoryManage::MakeDir(std::string name)
         Directory* ptr = workDir_->firstChildDirectory.get();
         while (true) {
             if (ptr->name == name) {
-                std::cout << "该目录名称已存在，请修改名称后重新创建目录！\n";
+                std::cout << "Directory name already exists.\n";
                 return;
             }
             if (ptr->nextDirectory)
@@ -115,7 +115,7 @@ void DirectoryManage::MakeDir(std::string name)
             }
         }
     }
-    std::cout << "新目录" << name << "创建成功！\n";
+    std::cout << "Directory '" << name << "' created successfully.\n";
 }
 
 void DirectoryManage::cdDir(std::string path)
@@ -124,7 +124,7 @@ void DirectoryManage::cdDir(std::string path)
         if (workDir_->parentDirectory)
             workDir_ = workDir_->parentDirectory;
         else
-            std::cout << "当前目录已经是根目录\n";
+            std::cout << "Already at root directory.\n";
         return;
     }
     std::queue<std::string> Path;
@@ -160,13 +160,13 @@ void DirectoryManage::cdDir(std::string path)
             }
         }
     }
-    std::cout << "路径输入有误！\n";
+    std::cout << "Invalid path.\n";
 }
 
 void DirectoryManage::rd(std::string name)
 {
     if (workDir_->firstChildDirectory == nullptr) {
-        std::cout << "当前目录无子目录，不存在你要删除的目录！\n";
+        std::cout << "No subdirectories to delete.\n";
         return;
     }
     Directory* p = workDir_->firstChildDirectory.get();
@@ -185,12 +185,12 @@ void DirectoryManage::rd(std::string name)
                     p->nextDirectory->frontDirectory = nullptr;
             }
             DeleteDir(p);
-            std::cout << "目录'" << name << "'删除成功！\n";
+            std::cout << "Directory '" << name << "' deleted successfully.\n";
             return;
         }
         p = p->nextDirectory.get();
     }
-    std::cout << "不存在'" << name << "'目录\n";
+    std::cout << "Directory '" << name << "' not found.\n";
 }
 
 void DirectoryManage::DeleteDir(Directory* p)
@@ -219,25 +219,36 @@ void DirectoryManage::DeleteDir(Directory* p)
     delete p;
 }
 
+void DirectoryManage::ListByName(const std::string& name)
+{
+    // Check if it's a file first
+    if (workDir_->firstChildFile) {
+        DirectoryEntry* p = workDir_->firstChildFile.get();
+        while (p) {
+            if (p->file.name == name) {
+                dirFile(name);
+                return;
+            }
+            p = p->nextFile.get();
+        }
+    }
+    // Check if it's a directory
+    if (workDir_->firstChildDirectory) {
+        Directory* p = workDir_->firstChildDirectory.get();
+        while (p) {
+            if (p->name == name) {
+                ListDir(p);
+                return;
+            }
+            p = p->nextDirectory.get();
+        }
+    }
+    std::cout << "ls: cannot access '" << name << "': No such file or directory\n";
+}
+
 void DirectoryManage::dir()
 {
-    std::cout << "请选择功能：\n"
-              << "1.显示当前目录下所有文件夹和文件\n"
-              << "2.显示当前目录下某文件的信息\n"
-              << "3.显示当前目录下某一子目录的信息\n";
-    int sel;
-    std::cin >> sel;
-    if (sel == 1)
-        ListAll();
-    else if (sel == 2) {
-        std::string name;
-        std::cin >> name;
-        dirFile(name);
-    } else if (sel == 3) {
-        std::string path;
-        std::cin >> path;
-        dirPath(path);
-    }
+    ListAll();
 }
 
 void DirectoryManage::ListAll()
@@ -250,7 +261,7 @@ void DirectoryManage::ListAll()
         q.pop();
         if (p->firstChildDirectory || p->firstChildFile) {
             GetPath(p);
-            std::cout << path_ << "下子目录及文件\n";
+            std::cout << "Contents of " << path_ << ": \n";
         }
         if (p->firstChildDirectory) {
             Directory* ptr = p->firstChildDirectory.get();
@@ -280,37 +291,37 @@ void DirectoryManage::dirFile(std::string name)
         DirectoryEntry* ptr = workDir_->firstChildFile.get();
         while (ptr) {
             if (ptr->file.name == name) {
-                std::cout << "创建时间：" << std::ctime(&ptr->file.create_time);
-                std::cout << "文件名：" << ptr->file.name << "\n";
-                std::cout << "文件大小：" << ptr->file.size << "\n";
-                std::cout << "文件属性：";
+                std::cout << "Creation time: " << std::ctime(&ptr->file.create_time);
+                std::cout << "File name: " << ptr->file.name << "\n";
+                std::cout << "Size: " << ptr->file.size << "\n";
+                std::cout << "Attributes: ";
                 std::cout << ((ptr->file.canRead == user_.userRight ||
                                ptr->file.canRead == 1)
-                              ? "可读  "
-                              : "不可读  ");
+                              ? "Readable  "
+                              : "Not readable  ");
                 std::cout << ((ptr->file.canWrite == user_.userRight ||
                                ptr->file.canWrite == 1)
-                              ? "可写\n"
-                              : "不可写\n");
+                              ? "Writable\n"
+                              : "Not writable\n");
                 return;
             }
             ptr = ptr->nextFile.get();
         }
     }
-    std::cout << "不存在该文件！\n";
+    std::cout << "File not found.\n";
 }
 
 void DirectoryManage::ListDir(Directory* p)
 {
     if (p->canRead != user_.userRight && p->canRead != 1) {
-        std::cout << "不好意思，您没有权限读取该目录的信息！\n";
+        std::cout << "Permission denied: cannot read directory info.\n";
         return;
     }
     if (p->firstChildDirectory || p->firstChildFile) {
         GetPath(p);
-        std::cout << path_ << "下子目录及文件\n";
+        std::cout << "Contents of " << path_ << ": \n";
     } else {
-        std::cout << "当前目录为空目录！\n";
+        std::cout << "Directory is empty.\n";
         return;
     }
     if (p->firstChildDirectory) {
@@ -367,7 +378,7 @@ void DirectoryManage::dirPath(std::string path)
             }
         }
     }
-    std::cout << "路径输入有误或不存在该目录！\n";
+    std::cout << "Invalid path or directory not found.\n";
 }
 
 void DirectoryManage::ren(std::string name, std::string newName)
@@ -392,43 +403,43 @@ void DirectoryManage::ren(std::string name, std::string newName)
             q = q->nextFile.get();
         }
     }
-    std::cout << "不存在'" << name << "'文件或目录\n";
+    std::cout << "File or directory '" << name << "' not found.\n";
 }
 
 void DirectoryManage::RenameDir(Directory* ptr, std::string newName)
 {
     if (ptr->canWrite != 1 && ptr->canWrite != user_.userRight) {
-        std::cout << "用户权限不足，无法修改！\n";
+        std::cout << "Permission denied: cannot rename.\n";
         return;
     }
     Directory* p = workDir_->firstChildDirectory.get();
     while (p) {
         if (p != ptr && p->name == newName) {
-            std::cout << "该目录名称已存在，无法重命名该目录！\n";
+            std::cout << "Directory name already exists, cannot rename.\n";
             return;
         }
         p = p->nextDirectory.get();
     }
     ptr->name = newName;
-    std::cout << "目录名修改成功！新目录名为" << ptr->name << "\n";
+    std::cout << "Directory renamed to '" << ptr->name << "'.\n";
 }
 
 void DirectoryManage::RenameFile(DirectoryEntry* ptr, std::string newName)
 {
     if (ptr->file.canWrite != 1 && ptr->file.canWrite != user_.userRight) {
-        std::cout << "用户权限不足，无法修改！\n";
+        std::cout << "Permission denied: cannot rename.\n";
         return;
     }
     DirectoryEntry* p = workDir_->firstChildFile.get();
     while (p) {
         if (p != ptr && p->file.name == newName) {
-            std::cout << "该文件名称已存在，无法重命名该文件！\n";
+            std::cout << "File name already exists, cannot rename.\n";
             return;
         }
         p = p->nextFile.get();
     }
     ptr->file.name = newName;
-    std::cout << "文件名修改成功！新文件名为" << ptr->file.name << "\n";
+    std::cout << "File renamed to '" << ptr->file.name << "'.\n";
 }
 
 std::string DirectoryManage::GetPath(Directory* curDir)
@@ -455,14 +466,14 @@ DirectoryManage::File DirectoryManage::CreateFile(std::string name)
     DirectoryEntry* p = workDir_->firstChildFile.get();
     while (p) {
         if (p->file.name == name) {
-            std::cout << "该文件名称已存在，请更改文件名后重新创建文件！\n";
+            std::cout << "File name already exists. Please use a different name.\n";
             return File{};
         }
         p = p->nextFile.get();
     }
     File newFile;
     newFile.name = name;
-    std::cout << "请输入文件内容：\n";
+    std::cout << "Enter file content:\n";
     std::cin.ignore();
     std::getline(std::cin, newFile.context);
     newFile.size = static_cast<int>(newFile.context.length());
@@ -576,21 +587,21 @@ DirectoryManage::File* DirectoryManage::WriteFile(std::string name)
             if (p->file.name == name) {
                 if (p->file.canWrite != 1 &&
                     p->file.canWrite != user_.userRight) {
-                    std::cout << "用户权限不足，无法编写该文件内容！\n";
+                    std::cout << "Permission denied: cannot write to file.\n";
                     return nullptr;
                 }
-                std::cout << "请输入文件内容：\n";
+                std::cout << "Enter file content:\n";
                 std::string context;
                 std::cin.ignore();
                 std::getline(std::cin, context);
                 p->file.context += context;
-                std::cout << "写文件成功！\n";
+                std::cout << "File written successfully.\n";
                 return &p->file;
             }
             p = p->nextFile.get();
         }
     }
-    std::cout << "不存在'" << name << "'文件！\n";
+    std::cout << "File '" << name << "' not found.\n";
     return nullptr;
 }
 
@@ -600,13 +611,13 @@ DirectoryManage::File* DirectoryManage::OpenFile(std::string name)
         DirectoryEntry* p = workDir_->firstChildFile.get();
         while (p) {
             if (p->file.name == name) {
-                std::cout << "打开文件成功！\n";
+                std::cout << "File opened successfully.\n";
                 return &p->file;
             }
             p = p->nextFile.get();
         }
     }
-    std::cout << "不存在'" << name << "'文件\n";
+    std::cout << "File '" << name << "' not found.\n";
     return nullptr;
 }
 
@@ -616,12 +627,12 @@ DirectoryManage::File* DirectoryManage::CloseFile(std::string name)
         DirectoryEntry* p = workDir_->firstChildFile.get();
         while (p) {
             if (p->file.name == name) {
-                std::cout << "关闭文件成功！\n";
+                std::cout << "File closed successfully.\n";
                 return &p->file;
             }
             p = p->nextFile.get();
         }
     }
-    std::cout << "不存在'" << name << "'文件\n";
+    std::cout << "File '" << name << "' not found.\n";
     return nullptr;
 }
