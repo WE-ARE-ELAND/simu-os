@@ -26,9 +26,9 @@ static void cli_enableVT()
 static bool cli_isatty()
 {
 #ifdef _WIN32
-    return _isatty(_fileno(stdin)) != 0;
+    return _isatty(_fileno(stdout)) != 0 && _isatty(_fileno(stdin)) != 0;
 #else
-    return isatty(STDIN_FILENO) != 0;
+    return isatty(STDOUT_FILENO) != 0 && isatty(STDIN_FILENO) != 0;
 #endif
 }
 
@@ -124,7 +124,8 @@ static std::vector<std::string> cli_tokenize(
 // Raw-input readline
 // ===========================================================================
 
-static std::string cli_readLine(std::vector<std::string>& history)
+static std::string cli_readLine(std::vector<std::string>& history,
+                                const std::vector<std::string>& names)
 {
     if (!cli_isatty())
     {
@@ -159,7 +160,44 @@ static std::string cli_readLine(std::vector<std::string>& history)
         { if (buf.empty()) { std::cout << "\n"; return "__EOF__"; }
           if (cursor > 0) { buf.erase(cursor - 1, 1); --cursor; redraw(); }
           continue; }
-        if (c == '\t') continue;             // placeholder
+        if (c == '\t')                       // Tab completion (simplified; uses dir_ names)
+        {
+            size_t start = (cursor == 0 || buf[cursor - 1] == ' ') ? 0 : buf.rfind(' ', cursor - 1);
+            if (start == std::string::npos) start = 0;
+            else ++start;
+            std::string prefix = buf.substr(start, cursor - start);
+            // names passed through the function parameter
+            // (names already captured via parameter)
+            std::vector<std::string> matches;
+            for (auto& n : names)
+                if (n.rfind(prefix, 0) == 0) matches.push_back(n);
+            if (matches.size() == 1)
+            {
+                buf.replace(start, prefix.size(), matches[0]);
+                cursor = start + matches[0].size();
+                redraw();
+            }
+            else if (matches.size() > 1)
+            {
+                std::string common = matches[0];
+                for (size_t i = 1; i < matches.size(); ++i)
+                    for (size_t j = 0; j < common.size(); ++j)
+                        if (common[j] != matches[i][j]) { common = common.substr(0, j); break; }
+                if (common.size() > prefix.size())
+                {
+                    buf.replace(start, prefix.size(), common);
+                    cursor = start + common.size();
+                    redraw();
+                }
+                else
+                {
+                    for (auto& m : matches) std::cout << m << "  ";
+                    std::cout << "\n";
+                    redraw();
+                }
+            }
+            continue;
+        }
         if (c == 27)
         {
             char s1 = static_cast<char>(std::cin.get());
@@ -203,6 +241,7 @@ CLI::CLI(ThreadManager& tm, DirectoryManage& dir, DiskManager& disk, MemoryManag
     : tm_(tm), dir_(dir), disk_(disk), mem_(mem)
 {
     cli_enableVT();
+    enable_color_ = cli_isatty();
     env_["HOME"]  = "/";
     env_["USER"]  = "";
     env_["SHELL"] = "simu-sh";
@@ -458,7 +497,9 @@ void CLI::showMenu()
     while (running_)
     {
         refresh();
-        line = cli_readLine(history_);
+        line = cli_readLine(history_, dir_.listChildNames());
+        if (!cli_isatty() && line != "__EOF__")
+            std::cout << line << "\n";
         if (line.empty() || line == "__EOF__") continue;
 
         history_.push_back(line);
@@ -717,15 +758,23 @@ int CLI::dispatch(const std::string& cmd, const std::vector<std::string>& args, 
 void CLI::refresh()
 {
     std::string path = dir_.GetPath(dir_.getWorkDir());
-    std::cout << "["
-              << bold(green(dir_.getUserName()))
-              << "@"
-              << cyan("simuos")
-              << " "
-              << bold(yellow(path))
-              << "]"
-              << bold(white("$ "))
-              << std::flush;
+    if (cli_isatty())
+    {
+        std::cout << "["
+                  << bold(green(dir_.getUserName()))
+                  << "@"
+                  << cyan("simuos")
+                  << " "
+                  << bold(yellow(path))
+                  << "]"
+                  << bold(white("$ "))
+                  << std::flush;
+    }
+    else
+    {
+        std::cout << "[" << dir_.getUserName() << "@simuos "
+                  << path << "]$ " << std::flush;
+    }
 }
 
 void CLI::print_name_(const std::string& name)

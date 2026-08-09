@@ -40,15 +40,18 @@ private:
     void du_dir();
     std::string human_size(int bytes);
 
-    // ANSI color helpers
-    std::string red(const std::string& s) { return "\033[31m" + s + "\033[0m"; }
-    std::string green(const std::string& s) { return "\033[32m" + s + "\033[0m"; }
-    std::string yellow(const std::string& s) { return "\033[33m" + s + "\033[0m"; }
-    std::string blue(const std::string& s) { return "\033[34m" + s + "\033[0m"; }
-    std::string magenta(const std::string& s) { return "\033[35m" + s + "\033[0m"; }
-    std::string cyan(const std::string& s) { return "\033[36m" + s + "\033[0m"; }
-    std::string white(const std::string& s) { return "\033[37m" + s + "\033[0m"; }
-    std::string bold(const std::string& s) { return "\033[1m" + s + "\033[0m"; }
+    // ANSI color helpers (auto-disable when stdout is not a terminal)
+    std::string _col_(const std::string& code, const std::string& s) {
+        return enable_color_ ? ("\033[" + code + "m" + s + "\033[0m") : s;
+    }
+    std::string red(const std::string& s) { return _col_("31", s); }
+    std::string green(const std::string& s) { return _col_("32", s); }
+    std::string yellow(const std::string& s) { return _col_("33", s); }
+    std::string blue(const std::string& s) { return _col_("34", s); }
+    std::string magenta(const std::string& s) { return _col_("35", s); }
+    std::string cyan(const std::string& s) { return _col_("36", s); }
+    std::string white(const std::string& s) { return _col_("37", s); }
+    std::string bold(const std::string& s) { return _col_("1", s); }
 
     ThreadManager& tm_;
     DirectoryManage& dir_;
@@ -60,6 +63,7 @@ private:
     std::unordered_map<std::string, std::string> env_;
     std::unordered_map<std::string, std::string> aliases_;
     std::vector<std::string> history_;
+    bool enable_color_ = true;
 
     int last_exit_ = 0;
     bool running_ = true;
