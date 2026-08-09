@@ -16,15 +16,16 @@ class ThreadManager
 {
 public:
     ThreadManager();
-    void data_generation_thread(std::string fileName);
-    void delete_data_thread(std::string name);
-    void execute_thread(std::string name);
+    void data_generation_thread(const std::string& fileName);
+    void delete_data_thread(const std::string& name);
+    void execute_thread(const std::string& name);
     void joinAllThreads();
 
     // Getters for CLI
     DirectoryManage& getDIR();
     DiskManager& getDIM();
     MemoryManager& getMem();
+    std::mutex& getInputMutex() { return input_mutex_; }
 
     // Allow CLI to spawn background threads
     void spawnThread(std::thread&& t) { threads_.emplace_back(std::move(t)); }

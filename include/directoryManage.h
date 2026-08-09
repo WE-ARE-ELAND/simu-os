@@ -63,30 +63,36 @@ public:
     ~DirectoryManage();
 
     void login();
-    User QueryUser(std::string account, std::string password);
+    User QueryUser(const std::string& account, const std::string& password);
     void CreateRootDirectory();
-    void tree(Directory* curDir, int level);
-    void MakeDir(std::string name);
-    void cdDir(std::string path);
-    void rd(std::string name);
+    void tree(Directory* curDir, int level) const;
+    void MakeDir(const std::string& name);
+    void cdDir(const std::string& path);
+    void rd(const std::string& name);
     void DeleteDir(Directory* p);
-    void ListDir(Directory* p);
-    void ListAll();
-    void ListByName(const std::string& name);
-    void dirFile(std::string name);
-    void dirPath(std::string path);
+    std::vector<std::string> listChildNames() const;
+    void ListDir(Directory* p) const;
+    void ListAll() const;
+    void ListByName(const std::string& name) const;
+    void dirFile(const std::string& name) const;
+    void dirPath(const std::string& path) const;
     void dir();
-    void ren(std::string name, std::string newName);
-    void RenameDir(Directory* ptr, std::string newName);
-    void RenameFile(DirectoryEntry* ptr, std::string newName);
-    std::string GetPath(Directory* curDir);
-    File CreateFile(std::string name);
+    void ren(const std::string& name, const std::string& newName);
+    void RenameDir(Directory* ptr, const std::string& newName);
+    void RenameFile(DirectoryEntry* ptr, const std::string& newName);
+    std::string GetPath(Directory* curDir) const;
+    File CreateFile(const std::string& name);
     void CreateDirEntry(File file, int first_block);
-    bool DeleteFile(std::string name);
-    File* ReadFile(std::string path);
-    File* WriteFile(std::string name);
-    File* OpenFile(std::string name);
-    File* CloseFile(std::string name);
+    bool DeleteFile(const std::string& name);
+    File* ReadFile(std::string path) const;
+    File* WriteFile(const std::string& name);
+    File* OpenFile(std::string name) const;
+    File* CloseFile(std::string name) const;
+
+    // Non-mutating accessors for ls/stat formatting
+    bool isDir(const std::string& name) const;
+    bool isFile(const std::string& name) const;
+    const File* getFile(const std::string& name) const;
 
     Directory* getWorkDir() const { return workDir_; }
     Directory* getRootDir() const { return rootDir_; }
@@ -95,6 +101,5 @@ public:
 private:
     Directory* workDir_ = nullptr;
     Directory* rootDir_ = nullptr;
-    std::string path_;
     User user_;
 };

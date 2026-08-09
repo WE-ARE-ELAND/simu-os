@@ -22,23 +22,23 @@ public:
     DiskManager();
 
     // External functions
-    int AllocateBlocks(std::string fileName, int size, std::string data);
+    int AllocateBlocks(const std::string& fileName, int size, const std::string& data);
     void DeallocateBlocks(std::string fileName);
-    std::string ReadFileDataFromDisk(std::string fileName);
+    std::string ReadFileDataFromDisk(const std::string& fileName) const;
     void readSwapBlock(short blockNum, std::string &buffer);
     void writeSwapBlock(short blockNum, std::string buffer);
-    std::vector<int> getAllBlocks(std::string fileName);
+    std::vector<int> getAllBlocks(const std::string& fileName) const;
 
     // Output functions
-    void dumpFile();
-    void PrintMyDisk();
-    void printFreeBlocks();
+    void dumpFile() const;
+    void PrintMyDisk() const;
+    void printFreeBlocks() const;
 
     // For testing (public interface for test files)
     short allocateBlock();
     int freeBlock(short num_block);
     void writeBlock(short num_block, std::string data);
-    std::string readBlock(short block_num);
+    std::string readBlock(short block_num) const;
 
     int getFreeDataBlockNum() const { return FreeDataBlockNum_; }
     int getFreeSwapBlockNum() const { return FreeSwapBlockNum_; }

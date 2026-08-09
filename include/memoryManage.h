@@ -10,6 +10,7 @@
 #include <set>
 #include <map>
 #include <memory>
+#include "diskManager.h"
 
 class MemoryManager
 {
@@ -50,12 +51,14 @@ class MemoryManager
     };
 
 public:
-    MemoryManager();
+    explicit MemoryManager(DiskManager& diskRef);
 
-    void allocateThreads(std::string threadName, std::string content);
-    void deleteBlock(std::string threadName);
-    void showPage(std::string threadName);
-    void showCurrentBlocks(const File &f);
+    void allocateThreads(const std::string& threadName, const std::string& content);
+    void deleteBlock(const std::string& threadName);
+    void showPage(const std::string& threadName) const;
+    void showCurrentBlocks(const File &f) const;
+    void pageIn(int thread_id, int page_id);
+    void pageOut(int thread_id, int page_id);
 
     std::vector<int> getFreeBlocks() const { return blocks_; }
     int getThreadCount() const { return static_cast<int>(threads_.size()); }
@@ -74,4 +77,5 @@ private:
     std::unordered_map<int, File> threads_;
     std::pair<int, int> disks_[DISK_END_ - DISK_START_ + 1];
     std::map<std::string, int> fileNameIdConvert_;
+    DiskManager& diskRef_;
 };

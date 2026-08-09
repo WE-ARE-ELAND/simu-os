@@ -86,7 +86,7 @@ short DiskManager::allocateBlock()
         int nextGroup = freeBlocks_[0][1];
         if (nextGroup != 0)
         {
-            for (int j = 0; j < freeBlocks_[0][0] + 2; j++)
+            for (int j = 0; j < freeBlocks_[nextGroup][0] + 2; j++)
             {
                 freeBlocks_[0][j] = freeBlocks_[nextGroup][j];
             }
@@ -115,7 +115,7 @@ void DiskManager::writeBlock(short num_block, std::string data)
     MyDisk_[num_block].data = std::move(data);
 }
 
-std::string DiskManager::readBlock(short block_num)
+std::string DiskManager::readBlock(short block_num) const
 {
     return MyDisk_[block_num].data;
 }
@@ -128,10 +128,10 @@ int DiskManager::freeBlock(short num_block)
         return -1;
     }
     int k = 0;
-    while (freeBlocks_[k][0] == NUM_FREE_PER_GROUP_)
-    {
+    while (k < NUM_FREE_GROUPS_ && freeBlocks_[k][0] == NUM_FREE_PER_GROUP_)
         k = freeBlocks_[k][1];
-    }
+    if (k >= NUM_FREE_GROUPS_ || freeBlocks_[k][0] == NUM_FREE_PER_GROUP_)
+        return -1;
     freeBlocks_[k][freeBlocks_[k][0] + 2] = num_block;
     freeBlocks_[k][0]++;
     fatList_[num_block] = -2;
@@ -146,20 +146,39 @@ int DiskManager::freeBlock(short num_block)
     return 1;
 }
 
-int DiskManager::AllocateBlocks(std::string fileName, int size, std::string data)
+int DiskManager::AllocateBlocks(const std::string& fileName, int size, const std::string& data)
 {
     if (size > FreeDataBlockNum_)
     {
         return -1;
     }
     short num_block, tmp_num_block;
-    int index = 0;
+    size_t index = 0;
     while (size--)
     {
         num_block = allocateBlock();
-        if (index < static_cast<int>(data.size()))
+        if (num_block == -1)
         {
-            if (static_cast<int>(data.size()) - index < BLOCK_SIZE)
+            if (index > 0)
+            {
+                short cur = fileNameToNumOfBlock_.at(fileName);
+                while (fatList_[cur] != -1)
+                {
+                    short nxt = fatList_[cur];
+                    freeBlock(cur);
+                    fatList_[cur] = -2;
+                    cur = nxt;
+                }
+                freeBlock(cur);
+                fatList_[cur] = -2;
+                fileNameToNumOfBlock_.erase(fileName);
+            }
+            return -1;
+        }
+        if (static_cast<size_t>(index) < data.size())
+        {
+            size_t remaining = data.size() - index;
+            if (remaining < static_cast<size_t>(BLOCK_SIZE))
             {
                 writeBlock(num_block, data.substr(index, data.size() - index));
             }
@@ -185,17 +204,17 @@ int DiskManager::AllocateBlocks(std::string fileName, int size, std::string data
 
 void DiskManager::DeallocateBlocks(std::string fileName)
 {
-    short start_num_block = fileNameToNumOfBlock_[fileName];
+    auto it = fileNameToNumOfBlock_.find(fileName);
+    if (it == fileNameToNumOfBlock_.end()) return;
+    short start_num_block = it->second;
     short num_block = start_num_block;
     while (fatList_[num_block] != -1)
     {
         int next_num_block = fatList_[num_block];
         freeBlock(num_block);
-        fatList_[num_block] = -2;
         num_block = next_num_block;
     }
     freeBlock(num_block);
-    fatList_[num_block] = -2;
     fileNameToNumOfBlock_.erase(fileName);
 }
 
@@ -209,9 +228,11 @@ void DiskManager::readSwapBlock(short blockNum, std::string &buffer)
     buffer = MyDisk_[blockNum].data; // Bug 6 fix
 }
 
-std::string DiskManager::ReadFileDataFromDisk(std::string fileName)
+std::string DiskManager::ReadFileDataFromDisk(const std::string& fileName) const
 {
-    int start_num_block = fileNameToNumOfBlock_[fileName];
+    auto it = fileNameToNumOfBlock_.find(fileName);
+    if (it == fileNameToNumOfBlock_.end()) return "";
+    int start_num_block = it->second;
     std::string data;
     int num_block = start_num_block;
     while (fatList_[num_block] != -1)
@@ -223,7 +244,7 @@ std::string DiskManager::ReadFileDataFromDisk(std::string fileName)
     return data;
 }
 
-void DiskManager::PrintMyDisk()
+void DiskManager::PrintMyDisk() const
 {
     for (int i = 0; i < NUM_BLOCKS_; i++)
     {
@@ -231,7 +252,7 @@ void DiskManager::PrintMyDisk()
     }
 }
 
-void DiskManager::dumpFile()
+void DiskManager::dumpFile() const
 {
     std::string filename("disk.txt");
     std::fstream output_fstream(filename, std::ios_base::out | std::ios_base::binary);
@@ -247,7 +268,7 @@ void DiskManager::dumpFile()
     output_fstream.close();
 }
 
-void DiskManager::printFreeBlocks()
+void DiskManager::printFreeBlocks() const
 {
     for (int i = 0; i < freeBlocks_[0][0] + 2; ++i)
     {
@@ -264,10 +285,12 @@ void DiskManager::printFreeBlocks()
     std::cout << std::endl;
 }
 
-std::vector<int> DiskManager::getAllBlocks(std::string fileName)
+std::vector<int> DiskManager::getAllBlocks(const std::string& fileName) const
 {
     std::vector<int> blocks;
-    int start_num_block = fileNameToNumOfBlock_[fileName];
+    auto it = fileNameToNumOfBlock_.find(fileName);
+    if (it == fileNameToNumOfBlock_.end()) return {};
+    int start_num_block = it->second;
     int num_block = start_num_block;
     while (fatList_[num_block] != -1)
     {
